@@ -1,0 +1,180 @@
+<% if (typeof error !== 'undefined' && error) { %>
+<div class="alert alert-danger d-flex align-items-center" role="alert">
+  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+  <div><%= error %></div>
+</div>
+<% } %>
+
+<% if (typeof success !== 'undefined' && success) { %>
+<div class="alert alert-success d-flex align-items-center" role="alert">
+  <i class="bi bi-check-circle-fill me-2"></i>
+  <div><%= success %></div>
+</div>
+<% } %>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div>
+          <i class="bi bi-shield-lock-fill me-2"></i>
+          <strong>Order Lock Automation</strong>
+        </div>
+        <a href="/admin/website-settings" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>Back To API Settings
+        </a>
+      </div>
+      <div class="card-body">
+        <form method="post" action="/admin/order-lock-settings">
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="order_lock_enabled" name="order_lock_enabled" value="true" <%= settings.order_lock_enabled ? 'checked' : '' %>>
+              <label class="form-check-label" for="order_lock_enabled">Enable Order Lock Rule</label>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="order_lock_amount_threshold">Lock Amount Threshold (BDT)</label>
+            <input class="form-control" type="number" min="0" step="1" id="order_lock_amount_threshold" name="order_lock_amount_threshold" value="<%= settings.order_lock_amount_threshold %>" required>
+            <div class="form-text">If user balance and order amount are both greater than or equal to this amount, order is locked.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="order_lock_delay_seconds">Auto Action Delay (Seconds)</label>
+            <input class="form-control" type="number" min="0" step="1" id="order_lock_delay_seconds" name="order_lock_delay_seconds" value="<%= settings.order_lock_delay_seconds %>">
+            <div class="form-text">Set 0 for immediate auto action. Example: 5, 10, 20 seconds.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="order_lock_auto_action">Auto Action After Delay</label>
+            <select class="form-select" id="order_lock_auto_action" name="order_lock_auto_action">
+              <option value="manual" <%= settings.order_lock_auto_action === 'manual' ? 'selected' : '' %>>Manual (No auto action)</option>
+              <option value="completed" <%= settings.order_lock_auto_action === 'completed' ? 'selected' : '' %>>Complete</option>
+              <option value="failed" <%= settings.order_lock_auto_action === 'failed' ? 'selected' : '' %>>Failed</option>
+              <option value="cancelled" <%= settings.order_lock_auto_action === 'cancelled' ? 'selected' : '' %>>Cancel</option>
+            </select>
+            <div class="form-text">Manual mode means admin will update status from order details page.</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="order_lock_delivery_message">Delivery Message (For Auto Action Callback)</label>
+            <textarea class="form-control" rows="3" id="order_lock_delivery_message" name="order_lock_delivery_message" placeholder="Optional. Leave empty to send no delivery message."><%= settings.order_lock_delivery_message %></textarea>
+            <div class="form-text">Optional field. If empty, no default message will be sent.</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="order_lock_player_id_override">Player ID Override (For Auto Callback)</label>
+            <input class="form-control" type="text" id="order_lock_player_id_override" name="order_lock_player_id_override" value="<%= settings.order_lock_player_id_override || '' %>" placeholder="Example: 1 or 1234567">
+            <div class="form-text">If set, callback payload UID/player_id will be replaced with this value for automatic complete/cancel/failed updates.</div>
+          </div>
+
+          <hr class="my-4">
+          <h6 class="fw-bold mb-3">Discord Alert Settings</h6>
+
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="order_lock_discord_enabled" name="order_lock_discord_enabled" value="true" <%= settings.order_lock_discord_enabled ? 'checked' : '' %>>
+              <label class="form-check-label" for="order_lock_discord_enabled">Enable Discord Alert For Problems</label>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="order_lock_discord_all_events" name="order_lock_discord_all_events" value="true" <%= settings.order_lock_discord_all_events ? 'checked' : '' %>>
+              <label class="form-check-label" for="order_lock_discord_all_events">Allow All Event Notifications (New Order, Captured, Success, Failed, Errors)</label>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="order_lock_discord_webhook_url">Discord Webhook URL</label>
+            <input class="form-control" type="text" id="order_lock_discord_webhook_url" name="order_lock_discord_webhook_url" value="<%= settings.order_lock_discord_webhook_url || '' %>" placeholder="https://discord.com/api/webhooks/...">
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Stuck Failed/Processing Alert Interval</label>
+            <div class="row g-2">
+              <div class="col-sm-6">
+                <input class="form-control" type="number" min="1" step="1" id="stuck_order_alert_interval_value" name="stuck_order_alert_interval_value" value="<%= settings.stuck_order_alert_interval_value || 30 %>">
+              </div>
+              <div class="col-sm-6">
+                <select class="form-select" id="stuck_order_alert_interval_unit" name="stuck_order_alert_interval_unit">
+                  <option value="seconds" <%= settings.stuck_order_alert_interval_unit === 'seconds' ? 'selected' : '' %>>Seconds</option>
+                  <option value="minutes" <%= settings.stuck_order_alert_interval_unit === 'minutes' ? 'selected' : '' %>>Minutes</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-text">Example: 30 seconds. Order status যদি processing/failed অবস্থায় এই সময়ের বেশি থাকে, Discord alert যাবে। completed/cancelled এ alert যাবে না।</div>
+          </div>
+
+          <div class="mb-4">
+            <button class="btn btn-outline-primary" type="button" id="testDiscordBtn">
+              <i class="bi bi-send me-1"></i>Send Test Discord Notification
+            </button>
+            <div id="testDiscordResult" class="form-text mt-2"></div>
+          </div>
+
+          <button class="btn btn-primary" type="submit">
+            <i class="bi bi-save me-1"></i>Save Order Lock Settings
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-warning">
+      <div class="card-header bg-warning text-dark">
+        <strong><i class="bi bi-lightbulb me-1"></i>Rule Example</strong>
+      </div>
+      <div class="card-body">
+        <ul class="mb-0 ps-3">
+          <li>If threshold is 500, balance 500+ and order amount 500+ will lock.</li>
+          <li>Locked orders do not run instant automation processing.</li>
+          <li>After delay, selected auto action is sent to source website.</li>
+          <li>In manual mode, admin controls status from order details.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const testBtn = document.getElementById('testDiscordBtn');
+  const result = document.getElementById('testDiscordResult');
+
+  if (!testBtn || !result) {
+    return;
+  }
+
+  testBtn.addEventListener('click', async function () {
+    const oldHtml = testBtn.innerHTML;
+    testBtn.disabled = true;
+    testBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+    result.className = 'form-text mt-2';
+    result.textContent = '';
+
+    try {
+      const response = await fetch('/admin/order-lock-settings/test-telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        result.className = 'text-success small mt-2';
+        result.textContent = data.message || 'Test notification sent successfully';
+      } else {
+        result.className = 'text-danger small mt-2';
+        result.textContent = data.message || 'Failed to send test notification';
+      }
+    } catch (error) {
+      result.className = 'text-danger small mt-2';
+      result.textContent = 'Failed to send test notification';
+    } finally {
+      testBtn.disabled = false;
+      testBtn.innerHTML = oldHtml;
+    }
+  });
+});
+</script>

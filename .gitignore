@@ -1,0 +1,40 @@
+﻿# Root .gitignore
+# Node / frontend
+node_modules/
+.output/
+dist/
+build/
+.env
+.env.*
+
+# PHP / Laravel
+/vendor/
+/.idea/
+/.vscode/
+/.phpunit.result.cache
+/storage/*.key
+/storage/debugbar
+/storage/*.sqlite
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups / zips
+*.zip
+
+# Logs
+*.log
+
+# Ignore local IDE workspace files
+*.sublime-project
+*.sublime-workspace
+
+# Ignore database dumps (except the intended clean schema file)
+# If you create local dumps, ensure they are outside the repo or named differently
+
+# Ignore automation browser cache
+services/topup-automation/Chrome/
+
+# Keep schema.sql in database-backup
+!database-backup/schema.sql

@@ -1,0 +1,1 @@
+router.post("/settings/generate-api-key",authenticate,adminController.generateApiKey);

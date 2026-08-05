@@ -1,0 +1,8 @@
+# Admin frontend
+node_modules/
+.output/
+dist/
+build/
+.env
+npm-debug.log
+.DS_Store

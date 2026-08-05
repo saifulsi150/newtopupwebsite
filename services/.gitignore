@@ -1,0 +1,16 @@
+# Laravel specific ignores
+/vendor/
+.env
+.env.*
+/node_modules/
+/storage/*.key
+/.idea/
+/.vscode/
+/public/storage
+/storage/debugbar
+.phpunit.result.cache
+/storage/*.sqlite
+
+# Build artifacts
+npm-debug.log
+composer.lock

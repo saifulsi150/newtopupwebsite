@@ -1,0 +1,6 @@
+﻿# Automation runtime artifacts
+Chrome/
+node_modules/
+.env
+*.log
+*.db

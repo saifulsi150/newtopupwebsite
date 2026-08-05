@@ -1,0 +1,1 @@
+function formatDiamondQuantity(t){if(!t)return"";const i=t.toString().trim();if(/^\d+$/.test(i)||/diamonds?/i.test(i)){if(i.toLowerCase().includes("diamonds"))return i.replace(/diamonds/i,"Diamond");if(/^\d+$/.test(i))return`${i} Diamond`;const t=i.match(/(\d+)\s*(.+)/);if(t){return`${t[1]} Diamond`}}return i}module.exports={formatDiamondQuantity:formatDiamondQuantity};

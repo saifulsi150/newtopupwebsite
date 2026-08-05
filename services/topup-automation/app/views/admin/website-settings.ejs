@@ -1,0 +1,77 @@
+<% if (typeof error !== 'undefined' && error) { %>
+<div class="alert alert-danger d-flex align-items-center" role="alert">
+  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+  <div><%= error %></div>
+</div>
+<% } %>
+
+<% if (typeof success !== 'undefined' && success) { %>
+<div class="alert alert-success d-flex align-items-center" role="alert">
+  <i class="bi bi-check-circle-fill me-2"></i>
+  <div><%= success %></div>
+</div>
+<% } %>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex align-items-center">
+        <i class="bi bi-gear-fill me-2"></i>
+        <h5 class="card-title mb-0">API Configuration</h5>
+      </div>
+      <div class="card-body">
+        <form action="/admin/website-settings" method="post" id="websiteSettingsForm">
+          <div class="mb-3">
+            <a href="/admin/order-lock-settings" class="btn btn-outline-warning">
+              <i class="bi bi-shield-lock me-1"></i>Order Lock Settings
+            </a>
+          </div>
+
+          <div class="mb-3">
+            <label for="website_api_url" class="form-label">
+              <i class="bi bi-link-45deg me-1"></i>Default Website URL
+            </label>
+            <input type="url" class="form-control" id="website_api_url" name="website_api_url" value="<%= settings.website_api_url || '' %>" placeholder="https://tast.ffuid.shop" required>
+            <div class="form-text">Fallback callback website if source website URL is not included in incoming order webhook.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="website_api_key" class="form-label">
+              <i class="bi bi-key me-1"></i>Shared API Key
+            </label>
+            <input class="form-control" id="website_api_key" name="website_api_key" value="<%= settings.website_api_key || '' %>" placeholder="One API key for all connected websites" required>
+            <div class="form-text">All websites will use this same API key to send orders.</div>
+          </div>
+
+          <div class="mb-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="automation_enabled" name="automation_enabled" value="true" <%= (settings.automation_enabled !== false) ? 'checked' : '' %>>
+              <label class="form-check-label" for="automation_enabled">
+                <i class="bi bi-robot me-1"></i>Enable Automation Processing
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save me-1"></i>Save Settings
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-info">
+      <div class="card-header bg-info text-white">
+        <h6 class="mb-0"><i class="bi bi-info-circle me-1"></i>How It Works</h6>
+      </div>
+      <div class="card-body">
+        <ol class="mb-0 ps-3">
+          <li class="mb-2">All websites use this same API key.</li>
+          <li class="mb-2">Incoming webhook may include source website name and URL.</li>
+          <li class="mb-2">Order completion callback is sent back to that source website automatically.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,1 @@
+const express=require("express"),router=express.Router(),authController=require("../controllers/authController"),{isAuthenticated:isAuthenticated}=require("../middleware/authMiddleware");router.get("/login",isAuthenticated,(e,r)=>{r.redirect("/")}),router.post("/login",(e,r)=>{r.redirect(307,"/")}),router.get("/logout",authController.logout),module.exports=router;
