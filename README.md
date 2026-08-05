@@ -1,4 +1,4 @@
-# Full-Stack Web Application (Laravel + Multi-Frontend)
+# tast.topup
 
 This repository contains the backend service and two frontend applications (User & Admin).
 
@@ -15,7 +15,7 @@ This repository contains the backend service and two frontend applications (User
 ### Step 1: Clone the Repository
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL> project
+git clone https://github.com/saifulsi150/tast.topup.git project
 cd project
 ```
 
