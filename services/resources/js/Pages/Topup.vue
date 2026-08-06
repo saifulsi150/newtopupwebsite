@@ -16,11 +16,6 @@ const selectedVariation = computed(() => {
   return props.product.variations?.find((variation) => variation.id === selectedVariationId.value) || null;
 });
 
-const totalPrice = computed(() => {
-  const price = Number(selectedVariation.value?.price || 0);
-  return price * Number(quantity.value || 1);
-});
-
 const imageUrl = (path) => `/uploads/${path}`;
 </script>
 
@@ -103,9 +98,7 @@ const imageUrl = (path) => `/uploads/${path}`;
 
           <section class="mt-2">
             <div class="bg-white border rounded-md p-3">
-              <div class="text-xs text-gray-500">Total cost</div>
-              <div class="text-xl font-bold" style="color: var(--theme-color);">৳{{ totalPrice }}</div>
-              <div class="mt-3 flex gap-2">
+              <div class="flex gap-2">
                 <button type="submit" class="align-middle bg-pink-500 hover:bg-pink-400 text-center px-4 py-2 text-white text-sm font-semibold rounded inline-block shadow-lg w-full">Buy Now</button>
               </div>
               <div class="mt-3 text-xs text-gray-500">
