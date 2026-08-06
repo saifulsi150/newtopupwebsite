@@ -442,7 +442,7 @@ watch([pgwAppEnabled, pgwForceInstallEnabled, pwaInstalledPersisted], () => {
 
         <!-- COPYRIGHT -->
         <div class="border-t border-white/10 pt-6 text-center text-[12px] text-slate-400">
-          © RG BAZZER 2026 | All Rights Reserved | Developed by <span class="font-bold text-white">Team Mahal</span>
+          ©  2026 | All Rights Reserved | Developed by <span class="font-bold text-white"></span>
         </div>
 
       </div>
