@@ -1,0 +1,107 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { normalizePublicImageUrl } from './media';
+
+const SETTINGS_PATH = join(process.cwd(), '..', 'admin-frontend', '.data', 'settings.json');
+
+type SettingsMap = Record<string, any>;
+
+function toFlag(value: unknown, fallback = 0) {
+  return Number(value ?? fallback) === 1 ? 1 : 0;
+}
+
+export function readAdminSettingsRaw(): SettingsMap {
+  if (!existsSync(SETTINGS_PATH)) return {};
+  try {
+    const parsed = JSON.parse(readFileSync(SETTINGS_PATH, 'utf8')) as SettingsMap;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function buildHomeSettings() {
+  const s = readAdminSettingsRaw();
+
+  const sliderItems = (Array.isArray(s.slider_items) ? s.slider_items : [])
+    .map((item: any) => ({
+      title: String(item?.title || '').trim(),
+      image_url: normalizePublicImageUrl(item?.image_url),
+      link_url: String(item?.link_url || '').trim(),
+      enabled: Number(item?.status ?? 1) === 1
+    }))
+    .filter((item: any) => item.enabled && (item.title || item.image_url || item.link_url));
+
+  const topSupportButtons = [
+    {
+      key: 'telegram',
+      enabled: toFlag(s.top_support_telegram_enabled, 1) === 1,
+      label: String(s.top_support_telegram_label || 'Telegram').trim() || 'Telegram',
+      sub: 'SUPPORT',
+      url: String(s.top_support_telegram_url || s.contact_telegram_url || '').trim()
+    },
+    {
+      key: 'group',
+      enabled: toFlag(s.top_support_group_enabled, 1) === 1,
+      label: String(s.top_support_group_label || 'Join Group').trim() || 'Join Group',
+      sub: 'COMMUNITY',
+      url: String(s.top_support_group_url || s.global_group_url || '').trim()
+    },
+    {
+      key: 'whatsapp',
+      enabled: toFlag(s.top_support_whatsapp_enabled, 1) === 1,
+      label: String(s.top_support_whatsapp_label || 'WhatsApp').trim() || 'WhatsApp',
+      sub: 'CHAT',
+      url: String(s.top_support_whatsapp_url || s.global_whatsapp_url || s.contact_whatsapp_url || '').trim()
+    }
+  ].filter((item) => item.enabled && item.url);
+
+  const pagePopupItems = (Array.isArray(s.home_page_popup_items) ? s.home_page_popup_items : [])
+    .map((item: any) => ({
+      title: String(item?.title || '').trim(),
+      imageUrl: normalizePublicImageUrl(item?.image_url),
+      note: String(item?.note || '').trim(),
+      buttonLabel: String(item?.button_label || 'Click Here').trim() || 'Click Here',
+      buttonUrl: String(item?.button_url || '').trim(),
+      closeLabel: 'CLOSE',
+      closeImageUrl: '',
+      enabled: Number(item?.status ?? 1) === 1
+    }))
+    .filter((item: any) => item.enabled);
+
+  return {
+    notice: String(s.home_notice_text || '').trim(),
+    showSlider: toFlag(s.slider_enabled, 1) === 1,
+    sliderItems,
+    showTopSupport: toFlag(s.top_support_enabled, 1) === 1,
+    topSupportButtons,
+    showCategories: toFlag(s.category_enabled, 1) === 1,
+    showLatestOrders: toFlag(s.latest_orders_enabled, 1) === 1,
+    detectPopupEnabled: toFlag(s.detect_popup_enabled, 0) === 1,
+    pagePopupEnabled: toFlag(s.home_page_popup_enabled, 0) === 1,
+    pagePopupLimitPerDay: Math.max(1, Number(s.home_page_popup_limit_per_day || 5)),
+    pagePopupItems
+  };
+}
+
+export function buildContactSettings() {
+  const s = readAdminSettingsRaw();
+  return {
+    site_name: String(s.site_name || '').trim(),
+    site_icon_url: normalizePublicImageUrl(s.site_icon_url),
+    logo_primary_url: normalizePublicImageUrl(s.logo_primary_url),
+    logo_secondary_url: normalizePublicImageUrl(s.logo_secondary_url),
+    theme_color: String(s.theme_color || '').trim(),
+    show_whatsapp: toFlag(s.contact_whatsapp_enabled, 1) === 1,
+    show_telegram: toFlag(s.contact_telegram_enabled, 1) === 1,
+    support_center_whatsapp_url: String(s.global_whatsapp_url || s.contact_whatsapp_url || '').trim(),
+    support_center_group_url: String(s.global_group_url || s.contact_telegram_url || '').trim(),
+    stay_connected_message: String(s.stay_connected_message || '').trim(),
+    social_facebook_url: String(s.social_facebook_url || '').trim(),
+    social_instagram_url: String(s.social_instagram_url || '').trim(),
+    social_youtube_url: String(s.social_youtube_url || '').trim(),
+    social_email: String(s.social_email || '').trim(),
+    pgw_app_enabled: toFlag(s.pgw_app_enabled, 1),
+    pgw_force_install_enabled: toFlag(s.pgw_force_install_enabled, 0)
+  };
+}

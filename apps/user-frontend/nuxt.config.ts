@@ -40,7 +40,9 @@ export default defineNuxtConfig({
       supportUrl: process.env.NUXT_PUBLIC_SUPPORT_URL || "https://t.me/admimapp",
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || "",
       googleRedirectUri: process.env.NUXT_PUBLIC_GOOGLE_REDIRECT_URI || "/api/auth/google/callback",
-      adminAssetBase: process.env.NUXT_PUBLIC_ADMIN_ASSET_BASE || `https://${process.env.ADMIN_DOMAIN || "admin.ffuid.shop"}`
+      adminAssetBase: process.env.NUXT_PUBLIC_ADMIN_ASSET_BASE || (process.env.NODE_ENV === 'production'
+        ? `https://${process.env.ADMIN_DOMAIN || "admin.ffuid.shop"}`
+        : 'http://127.0.0.1:3001')
     }
   },
   nitro: {

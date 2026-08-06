@@ -21,8 +21,6 @@ const { data: homeSettingsData } = await useFetch<any>('/api/settings/home', {
 });
 
 const products = computed(() => data.value?.products || []);
-const runtimeConfig = useRuntimeConfig();
-const adminAssetBase = String(runtimeConfig.public.adminAssetBase || 'https://admin.ffuid.shop').replace(/\/+$/, '');
 const categories = computed(() => categoriesData.value?.categories || []);
 const homeSettings = computed(() => homeSettingsData.value?.home || {});
 const sliderItems = computed(() => {
@@ -300,7 +298,7 @@ onMounted(() => {
       </div>
       <div v-else class="main-banner">
         <a href="https://youtu.be/uacJPyfla2g?si=a2XiC0U0P6QZZcq7" target="_blank" rel="noopener">
-          <img :src="`${adminAssetBase}/banners/1772818681.jpg`" alt="RG Bazzer Banner">
+          <img src="https://admin.rgbazer.com/banners/1772818681.jpg" alt="RG Bazzer Banner">
         </a>
       </div>
       <div class="slider-indicator" aria-hidden="true">—</div>

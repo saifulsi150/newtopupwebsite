@@ -3,6 +3,7 @@ node_modules/
 .output/
 dist/
 build/
+.data/
 .env
 npm-debug.log
 .DS_Store
