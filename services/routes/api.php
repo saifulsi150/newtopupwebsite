@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\GamevaultApiController;
+use App\Http\Controllers\SystemUpdateController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -37,3 +38,5 @@ Route::prefix('gamevault')->group(function () {
     Route::delete('comments/{id}', [GamevaultApiController::class, 'deleteComment']);
 });
 
+// System update — protected by X-Update-Token header (see SYSTEM_UPDATE_SECRET in .env)
+Route::post('/admin/system/update', [SystemUpdateController::class, 'runUpdate']);

@@ -1,0 +1,92 @@
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "${MYSQL_PUBLIC_PORT:-3306}:3306"
+    volumes:
+      - tast_mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PUBLIC_PORT:-6379}:6379"
+    volumes:
+      - tast_redis_data:/data
+
+  backend:
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - redis
+    env_file:
+      - ./services/.env
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+
+  user-frontend:
+    build:
+      context: ./apps/user-frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - redis
+      - backend
+    environment:
+      NODE_ENV: production
+      APP_DOMAIN: ${APP_DOMAIN}
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN}
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      REDIS_URL: ${REDIS_URL}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+      UDDOKTAPAY_API_KEY: ${UDDOKTAPAY_API_KEY}
+      UDDOKTAPAY_BASE_URL: ${UDDOKTAPAY_BASE_URL}
+      NUXT_APP_BASE_URL: ${NUXT_APP_BASE_URL}
+      NUXT_PUBLIC_SITE_NAME: ${NUXT_PUBLIC_SITE_NAME}
+      NUXT_PUBLIC_SUPPORT_URL: ${NUXT_PUBLIC_SUPPORT_URL}
+      NUXT_PUBLIC_GOOGLE_CLIENT_ID: ${NUXT_PUBLIC_GOOGLE_CLIENT_ID}
+      NUXT_PUBLIC_GOOGLE_REDIRECT_URI: ${NUXT_PUBLIC_GOOGLE_REDIRECT_URI}
+      NUXT_PUBLIC_ADMIN_ASSET_BASE: http://${ADMIN_DOMAIN}:${ADMIN_FRONTEND_PORT:-3001}
+    ports:
+      - "${USER_FRONTEND_PORT:-3000}:3000"
+
+  admin-frontend:
+    build:
+      context: ./apps/admin-frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - backend
+    environment:
+      NODE_ENV: production
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      ADMIN_SECRET: ${ADMIN_SECRET}
+      NUXT_PUBLIC_SITE_NAME: ${NUXT_PUBLIC_SITE_NAME}
+    ports:
+      - "${ADMIN_FRONTEND_PORT:-3001}:3001"
+
+volumes:
+  tast_mysql_data:
+  tast_redis_data:

@@ -95,9 +95,30 @@ async function closeEditModal() {
   await saveSettings(true);
 }
 
+const updating = ref(false)
+const updateLogs = ref<string[]>([])
+const updateResult = ref<'success' | 'error' | null>(null)
+
+async function handleSystemUpdate() {
+  if (!confirm('Are you sure? This will pull latest code from GitHub and run database migrations on the live server.')) return
+  updating.value = true
+  updateLogs.value = []
+  updateResult.value = null
+  try {
+    const res = await $fetch<{ success: boolean; message: string; logs: string[] }>('/api/system/update', { method: 'POST' })
+    updateLogs.value = res.logs || []
+    updateResult.value = 'success'
+    alert(res.message || 'System updated successfully!')
+  } catch (e: any) {
+    updateResult.value = 'error'
+    updateLogs.value = [e?.data?.statusMessage || e?.message || 'Unknown error']
+    alert('Update failed: ' + (e?.data?.statusMessage || e?.message || 'Check server logs.'))
+  } finally {
+    updating.value = false
+  }
+}
+
 async function restartAdminApp() {
-  if (!confirm('Restart admin now? This may take around 20-60 seconds.')) return;
-  restarting.value = true;
   try {
     const res = await $fetch<any>('/api/settings/restart', { method: 'POST' });
     alert(res?.message || 'Restart started. Please refresh after a short wait.');
@@ -325,6 +346,28 @@ async function uploadImageForField(event: Event, field: 'logo_primary_url' | 'lo
         </button>
         <span v-if="autoSaving" class="text-xs font-semibold text-slate-500">Auto saving...</span>
         <span v-if="saved" class="text-sm font-semibold text-green-600">{{ saveNotice }}</span>
+      </div>
+
+      <!-- System Update Card -->
+      <div class="admin-card p-4 border-l-4 border-blue-500">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="text-base">🚀</span>
+          <p class="text-sm font-bold text-slate-700">System Update</p>
+        </div>
+        <p class="mb-3 text-xs text-slate-500">Pulls the latest code from GitHub (main branch), runs new database migrations, and clears all caches automatically.</p>
+        <button
+          :disabled="updating"
+          class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60 transition"
+          @click="handleSystemUpdate"
+        >
+          <span v-if="updating">⏳ Updating... Please wait</span>
+          <span v-else>🚀 Check &amp; Apply System Update</span>
+        </button>
+        <div v-if="updateLogs.length" class="mt-3 rounded-lg bg-slate-900 p-3 font-mono text-xs text-green-300 max-h-40 overflow-y-auto">
+          <p v-for="(log, i) in updateLogs" :key="i" class="leading-relaxed">{{ log }}</p>
+        </div>
+        <p v-if="updateResult === 'success'" class="mt-2 text-xs font-semibold text-green-600">✅ Update completed successfully.</p>
+        <p v-if="updateResult === 'error'" class="mt-2 text-xs font-semibold text-red-600">❌ Update failed. See logs above.</p>
       </div>
     </template>
 

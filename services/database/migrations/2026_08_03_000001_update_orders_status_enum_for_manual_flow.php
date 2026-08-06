@@ -2,11 +2,14 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('orders')) return;
+
         DB::statement("UPDATE orders SET status = 'complete' WHERE status = 'completed'");
         DB::statement("UPDATE orders SET status = 'running' WHERE status = 'processing'");
         DB::statement("UPDATE orders SET status = 'looking' WHERE status = 'auto-processing'");

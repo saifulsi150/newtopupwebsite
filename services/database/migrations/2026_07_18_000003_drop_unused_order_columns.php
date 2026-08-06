@@ -11,6 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('orders')) return;
+
         Schema::table('orders', function (Blueprint $table) {
             $columns = [];
 

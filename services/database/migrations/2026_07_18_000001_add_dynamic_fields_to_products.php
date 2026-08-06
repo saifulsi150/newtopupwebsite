@@ -12,9 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            // Store dynamic field configurations as JSON
-            // Format: [{"label": "Enter your UID", "key": "player_id"}, ...]
-            $table->json('dynamic_fields')->nullable()->after('input');
+            if (!Schema::hasColumn('products', 'dynamic_fields')) {
+                // Store dynamic field configurations as JSON
+                $col = $table->json('dynamic_fields')->nullable();
+                if (Schema::hasColumn('products', 'input')) {
+                    $col->after('input');
+                }
+            }
         });
     }
 
