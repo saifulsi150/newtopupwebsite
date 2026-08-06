@@ -1,71 +1,139 @@
-# tast.topup
+# TAST Topup Monorepo
 
-This repository contains the backend service and two frontend applications (User & Admin).
+This project has 3 runnable apps:
+- user frontend (Nuxt 3)
+- admin frontend (Nuxt 3)
+- backend API (Laravel)
 
-## Repository Structure
-- services/: Laravel Backend API
-- apps/user-frontend/: Frontend application for general users
-- apps/admin-frontend/: Admin dashboard panel
-- database-backup/: Clean MySQL Database schema
+Laravel is used as API/backend service. User/admin UI should run from Nuxt apps.
 
----
+## Project Structure
+- apps/user-frontend: User website (Nuxt)
+- apps/admin-frontend: Admin panel (Nuxt)
+- services: Laravel backend API
+- database-backup/schema.sql: Base database schema
+- Start App.bat: One-click local launcher for all 3 services
 
-## VPS Quick Deployment Guide
+## Default Local Ports
+- User frontend: http://127.0.0.1:3000
+- Admin frontend: http://127.0.0.1:3001
+- Laravel API: http://127.0.0.1:8000
+- Laravel health check: http://127.0.0.1:8000/healthz
 
-### Step 1: Clone the Repository
+## Quick Start (Windows)
+### Option A: One click
+From repository root, run:
 
-```bash
-git clone https://github.com/saifulsi150/tast.topup.git project
-cd project
+```bat
+Start App.bat
 ```
 
-### Step 2: Create Deployment Config
+This starts all 3 services in separate terminal windows.
 
-```bash
-cp .env.example .env
+### Option B: Run manually (3 terminals)
+1) Backend API
+
+```powershell
+cd services
+php artisan serve --host=127.0.0.1 --port=8000
 ```
 
-Update `.env` with your database passwords, admin login, domains, and `DEPLOY_SCHEMA_FILE`.
+2) User frontend
 
-For Docker-safe admin-triggered updates, also set:
-- `DEPLOY_WEBHOOK_TOKEN` (strong random string)
-- `DEPLOY_AGENT_URL` (default `http://deploy-agent:8099`)
-
-Important:
-- `database-backup/schema.sql` is only a minimal clean schema.
-- For a full production install, point `DEPLOY_SCHEMA_FILE` at a sanitized full schema dump for this website.
-
-### Step 3: Run One-Script Deployment
-
-```bash
-chmod +x deploy.sh
-./deploy.sh
+```powershell
+cd apps/user-frontend
+npm install
+npm run dev -- --host 127.0.0.1 --port 3000
 ```
 
-This script will:
-- start MySQL and Redis with Docker Compose
-- create the database and database user
-- import the configured SQL schema files
-- generate `services/.env`
-- build and start Laravel, user frontend, and admin frontend containers
-- run Laravel key generation, migrations, cache steps, and admin bootstrap
+3) Admin frontend
 
-### Step 4: Access the Services
+```powershell
+cd apps/admin-frontend
+npm install
+npm run dev -- --host 127.0.0.1 --port 3001
+```
 
-- User frontend: `http://your-server-ip:3000`
-- Admin frontend: `http://your-server-ip:3001`
-- Backend API: `http://your-server-ip:8000`
+## Environment and Connections
 
-### Step 5: Optional Reverse Proxy
+All services need the same MySQL/Redis connection values.
 
-If you want port 80/443 domains, point Nginx or Cloudflare Tunnel to:
-- user site -> `127.0.0.1:3000`
-- admin site -> `127.0.0.1:3001`
-- backend/API -> `127.0.0.1:8000`
+### Backend env file
+Use `services/.env` for Laravel DB/cache/session/queue config.
 
----
+Minimum required values (example):
 
-Notes:
-- Ensure Docker Engine with the Compose plugin is installed on your VPS before running `deploy.sh`.
-- The repository includes only a minimal clean schema by default. Full website installation needs a sanitized complete schema dump.
-- Default ports are 3000 for the user frontend, 3001 for the admin frontend, 8000 for the backend API, 3306 for MySQL, and 6379 for Redis.
+```env
+APP_URL=http://127.0.0.1:8000
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=topup_db_tast_ffuid
+DB_USERNAME=topup_user_1091
+DB_PASSWORD=your_password
+
+CACHE_DRIVER=redis
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=redis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+```
+
+### User frontend env
+Nuxt user app uses server-side runtime DB access from `apps/user-frontend/nuxt.config.ts`.
+
+Set these environment variables before running user frontend:
+- `MYSQL_HOST`
+- `MYSQL_PORT`
+- `MYSQL_USER`
+- `MYSQL_PASSWORD`
+- `MYSQL_DATABASE`
+- `REDIS_URL`
+
+Optional public vars:
+- `NUXT_PUBLIC_SITE_NAME`
+- `NUXT_PUBLIC_SUPPORT_URL`
+
+### Admin frontend env
+Nuxt admin app also uses DB values from `apps/admin-frontend/nuxt.config.ts`.
+
+Set:
+- `MYSQL_HOST`
+- `MYSQL_PORT`
+- `MYSQL_USER`
+- `MYSQL_PASSWORD`
+- `MYSQL_DATABASE`
+- `ADMIN_SECRET`
+
+Optional deploy-agent vars:
+- `DEPLOY_AGENT_URL`
+- `DEPLOY_WEBHOOK_TOKEN`
+
+## Database Setup
+1) Create MySQL database and user.
+2) Import base schema:
+
+```bash
+mysql -u <user> -p <database> < database-backup/schema.sql
+```
+
+3) Run Laravel migrations if needed:
+
+```powershell
+cd services
+php artisan migrate
+```
+
+## Troubleshooting
+- If `127.0.0.1:3000` or `127.0.0.1:3001` is down, restart Nuxt app in that folder.
+- If backend root `/` returns 404, that can be normal for API-only backend. Use `/healthz` to confirm backend is up.
+- If topup page shows `Package not found.`, the product exists but no active package is available for that product.
+- If ports are busy, close old node/php processes or re-run `Start App.bat`.
+
+## Production (Docker)
+For server deployment, use root scripts:
+- `deploy.sh`
+- `docker-compose.yml`
+
+Set root `.env` values first, then run deploy script on Linux VPS.

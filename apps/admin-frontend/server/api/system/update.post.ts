@@ -1,16 +1,21 @@
 import { createError, defineEventHandler } from 'h3';
+import { startLocalSystemUpdateJob, toPublicSystemJob } from '../../utils/system-jobs';
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event);
   const deployAgentUrl = String(config.deployAgentUrl || '').trim();
   const deployWebhookToken = String(config.deployWebhookToken || '').trim();
 
-  if (!deployAgentUrl) {
-    throw createError({ statusCode: 500, statusMessage: 'DEPLOY_AGENT_URL is not configured.' });
-  }
-
-  if (!deployWebhookToken) {
-    throw createError({ statusCode: 500, statusMessage: 'DEPLOY_WEBHOOK_TOKEN is not configured.' });
+  if (!deployAgentUrl || !deployWebhookToken) {
+    const localJob = startLocalSystemUpdateJob();
+    const result = toPublicSystemJob(localJob);
+    return {
+      success: true,
+      message: 'Deploy agent config missing. Running local update fallback.',
+      jobId: result.jobId,
+      status: result.status,
+      logs: result.logs,
+    };
   }
 
   const url = `${deployAgentUrl.replace(/\/$/, '')}/deploy`;

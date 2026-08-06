@@ -41,10 +41,14 @@ echo Starting Admin Frontend...
 start "Admin Frontend" cmd /k "call ""%ADMIN_SCRIPT%"""
 
 echo.
+echo Waiting 8 seconds for initial boot...
+timeout /t 8 /nobreak >nul
+
+echo.
 echo Opening websites in browser...
-start "" http://127.0.0.1:8000
 start "" http://127.0.0.1:3000
 start "" http://127.0.0.1:3001
+start "" http://127.0.0.1:8000
 
 echo.
 echo Done. You can now use the websites.

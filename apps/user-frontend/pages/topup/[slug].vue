@@ -96,6 +96,29 @@ const packageOptions = computed(() => {
   }));
 });
 
+const hasProduct = computed(() => Boolean(data.value?.product?.id));
+const hasPackages = computed(() => packageOptions.value.length > 0);
+
+const unavailableMessage = computed(() => {
+  if (error.value) {
+    const status = Number((error.value as any)?.statusCode || (error.value as any)?.status || 0);
+    if (status === 404) return 'Package not found.';
+    return 'Unable to load this page right now.';
+  }
+
+  if (!data.value || !hasProduct.value) {
+    return 'Product not found.';
+  }
+
+  if (!hasPackages.value) {
+    return 'Package not found.';
+  }
+
+  return '';
+});
+
+const showUnavailable = computed(() => !pending.value && unavailableMessage.value.length > 0);
+
 const selected = computed(() => {
   return packageOptions.value.find((item) => item.id === selectedPackageId.value) || null;
 });
@@ -220,8 +243,8 @@ async function checkPlayerName() {
       <div v-if="pending" class="card-panel mt-6 p-10 text-center text-slate-600">
         Preparing your checkout...
       </div>
-      <div v-else-if="error || !data" class="card-panel mt-6 border-rose-200 bg-rose-50 p-10 text-center text-rose-600">
-        This product is not available right now.
+      <div v-else-if="showUnavailable" class="card-panel mt-6 border-rose-200 bg-rose-50 p-10 text-center text-rose-600">
+        {{ unavailableMessage }}
       </div>
 
       <div v-else class="mt-2 grid gap-3 lg:grid-cols-[1.12fr_0.88fr]">

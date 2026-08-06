@@ -2,16 +2,14 @@
 
 namespace App\Models;
 
-use Filament\Panel;
 use App\Constants\OrderStatus;
 use Illuminate\Notifications\Notifiable;
-use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
@@ -63,16 +61,11 @@ class User extends Authenticatable implements FilamentUser
         });
     }
 
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return $this->user_type === 'admin';
-    }
-
     public function getRedirectRoute()
     {
         return match ($this->user_type) {
             'user' => '/',
-            'admin' => '/adminkycbd12345'
+            'admin' => '/'
         };
     }
 

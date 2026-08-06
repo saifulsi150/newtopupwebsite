@@ -1,4 +1,5 @@
 import { createError, defineEventHandler, getQuery } from 'h3';
+import { getLocalSystemJob, toPublicSystemJob } from '../../utils/system-jobs';
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -12,7 +13,11 @@ export default defineEventHandler(async (event) => {
   }
 
   if (!deployAgentUrl || !deployWebhookToken) {
-    throw createError({ statusCode: 500, statusMessage: 'Deploy agent config is missing.' });
+    const localJob = getLocalSystemJob(jobId);
+    if (!localJob) {
+      throw createError({ statusCode: 404, statusMessage: 'Local update job not found.' });
+    }
+    return toPublicSystemJob(localJob);
   }
 
   const url = `${deployAgentUrl.replace(/\/$/, '')}/deploy/${encodeURIComponent(jobId)}`;
