@@ -19,42 +19,53 @@ git clone https://github.com/saifulsi150/tast.topup.git project
 cd project
 ```
 
-### Step 2: Database Setup
-
-1. Create a fresh MySQL database on your VPS / phpMyAdmin.
-2. Import the clean SQL schema:
+### Step 2: Create Deployment Config
 
 ```bash
-mysql -u <db_user> -p <db_name> < database-backup/schema.sql
+cp .env.example .env
 ```
 
-### Step 3: Run Auto-Deployment Script
+Update `.env` with your database passwords, admin login, domains, and `DEPLOY_SCHEMA_FILE`.
 
-Give execution permission and run the setup script:
+For Docker-safe admin-triggered updates, also set:
+- `DEPLOY_WEBHOOK_TOKEN` (strong random string)
+- `DEPLOY_AGENT_URL` (default `http://deploy-agent:8099`)
+
+Important:
+- `database-backup/schema.sql` is only a minimal clean schema.
+- For a full production install, point `DEPLOY_SCHEMA_FILE` at a sanitized full schema dump for this website.
+
+### Step 3: Run One-Script Deployment
 
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
 ```
 
-### Step 4: Environment Configuration
+This script will:
+- start MySQL and Redis with Docker Compose
+- create the database and database user
+- import the configured SQL schema files
+- generate `services/.env`
+- build and start Laravel, user frontend, and admin frontend containers
+- run Laravel key generation, migrations, cache steps, and admin bootstrap
 
-Update your database credentials and API URLs inside services/.env:
+### Step 4: Access the Services
 
-```bash
-nano services/.env
-```
+- User frontend: `http://your-server-ip:3000`
+- Admin frontend: `http://your-server-ip:3001`
+- Backend API: `http://your-server-ip:8000`
 
-Then run artisan cache clear and caches:
+### Step 5: Optional Reverse Proxy
 
-```bash
-cd services
-php artisan config:cache
-php artisan route:cache
-```
+If you want port 80/443 domains, point Nginx or Cloudflare Tunnel to:
+- user site -> `127.0.0.1:3000`
+- admin site -> `127.0.0.1:3001`
+- backend/API -> `127.0.0.1:8000`
 
 ---
 
 Notes:
-- Ensure PHP, Composer, Node.js and NPM are installed on your VPS before running deploy.sh.
-- The repository includes a clean SQL schema (database-backup/schema.sql) without demo users or products. If you need to seed an admin user, use a Laravel seeder or create the user manually after importing the schema.
+- Ensure Docker Engine with the Compose plugin is installed on your VPS before running `deploy.sh`.
+- The repository includes only a minimal clean schema by default. Full website installation needs a sanitized complete schema dump.
+- Default ports are 3000 for the user frontend, 3001 for the admin frontend, 8000 for the backend API, 3306 for MySQL, and 6379 for Redis.

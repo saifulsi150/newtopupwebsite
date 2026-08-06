@@ -18,6 +18,11 @@ export default defineNuxtConfig({
     mysqlPassword: process.env.MYSQL_PASSWORD || 'ffuid_pass',
     mysqlDatabase: process.env.MYSQL_DATABASE || 'topup_db_tast_ffuid',
     adminSecret: process.env.ADMIN_SECRET || 'change_this_secret_123',
+    deployAgentUrl: process.env.DEPLOY_AGENT_URL || 'http://deploy-agent:8099',
+    deployWebhookToken: process.env.DEPLOY_WEBHOOK_TOKEN || '',
+    adminEmail: process.env.ADMIN_EMAIL || 'admin@ghostbazar.online',
+    adminPassword: process.env.ADMIN_PASSWORD || 'Admin@12345',
+    adminName: process.env.ADMIN_NAME || 'GhostBazar Admin',
     public: {
       siteName: process.env.NUXT_PUBLIC_SITE_NAME || 'GhostBazar Admin'
     }

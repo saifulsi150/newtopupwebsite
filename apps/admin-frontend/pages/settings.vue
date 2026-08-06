@@ -98,25 +98,78 @@ async function closeEditModal() {
 const updating = ref(false)
 const updateLogs = ref<string[]>([])
 const updateResult = ref<'success' | 'error' | null>(null)
+const updateJobId = ref('')
+let updatePollTimer: ReturnType<typeof setInterval> | null = null
+
+function stopUpdatePolling() {
+  if (updatePollTimer) {
+    clearInterval(updatePollTimer)
+    updatePollTimer = null
+  }
+}
+
+async function pollUpdateStatus(jobId: string) {
+  try {
+    const status = await $fetch<{
+      success: boolean
+      id: string
+      status: 'running' | 'completed' | 'failed'
+      logs: string[]
+    }>('/api/system/update-status', {
+      method: 'GET',
+      query: { jobId }
+    })
+
+    updateLogs.value = status.logs || []
+
+    if (status.status === 'completed') {
+      updateResult.value = 'success'
+      updating.value = false
+      stopUpdatePolling()
+      alert('System updated successfully!')
+    } else if (status.status === 'failed') {
+      updateResult.value = 'error'
+      updating.value = false
+      stopUpdatePolling()
+      alert('Update failed. See logs for details.')
+    }
+  } catch (e: any) {
+    updateResult.value = 'error'
+    updating.value = false
+    stopUpdatePolling()
+    updateLogs.value = [e?.data?.statusMessage || e?.message || 'Unable to read update status']
+    alert('Update status check failed: ' + (e?.data?.statusMessage || e?.message || 'Unknown error'))
+  }
+}
 
 async function handleSystemUpdate() {
   if (!confirm('Are you sure? This will pull latest code from GitHub and run database migrations on the live server.')) return
+  stopUpdatePolling()
   updating.value = true
   updateLogs.value = []
   updateResult.value = null
   try {
-    const res = await $fetch<{ success: boolean; message: string; logs: string[] }>('/api/system/update', { method: 'POST' })
+    const res = await $fetch<{ success: boolean; message: string; jobId: string; logs: string[] }>('/api/system/update', { method: 'POST' })
+    updateJobId.value = String(res.jobId || '')
     updateLogs.value = res.logs || []
-    updateResult.value = 'success'
-    alert(res.message || 'System updated successfully!')
+    if (!updateJobId.value) {
+      throw new Error('Deployment job id was not returned.')
+    }
+    updatePollTimer = setInterval(() => {
+      pollUpdateStatus(updateJobId.value)
+    }, 3000)
+    await pollUpdateStatus(updateJobId.value)
   } catch (e: any) {
     updateResult.value = 'error'
+    stopUpdatePolling()
     updateLogs.value = [e?.data?.statusMessage || e?.message || 'Unknown error']
     alert('Update failed: ' + (e?.data?.statusMessage || e?.message || 'Check server logs.'))
-  } finally {
-    updating.value = false
   }
 }
+
+onBeforeUnmount(() => {
+  stopUpdatePolling()
+})
 
 async function restartAdminApp() {
   try {

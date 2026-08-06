@@ -26,6 +26,7 @@ Thumbs.db
 
 # Logs
 *.log
+.deploy-lock/
 
 # Ignore local IDE workspace files
 *.sublime-project

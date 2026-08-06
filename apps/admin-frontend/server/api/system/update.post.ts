@@ -1,59 +1,46 @@
 import { createError, defineEventHandler } from 'h3';
-import { execSync } from 'node:child_process';
-import { resolve } from 'node:path';
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event);
+  const deployAgentUrl = String(config.deployAgentUrl || '').trim();
+  const deployWebhookToken = String(config.deployWebhookToken || '').trim();
 
-  // Resolve project root (two levels up from apps/admin-frontend)
-  const projectRoot = resolve(process.cwd(), '../..');
-  const servicesDir = resolve(process.cwd(), '../../services');
-  const isWin = process.platform === 'win32';
-
-  const logs: string[] = [];
-
-  // Step 1: Git pull
-  try {
-    const out = execSync(`git pull origin main`, {
-      cwd: projectRoot,
-      encoding: 'utf8',
-      timeout: 60_000,
-    });
-    logs.push('Git: ' + out.trim());
-  } catch (e: any) {
-    // Non-fatal — already up to date returns exit 0, so a throw means a real issue
-    logs.push('Git note: ' + String(e?.stdout || e?.message || 'unknown'));
+  if (!deployAgentUrl) {
+    throw createError({ statusCode: 500, statusMessage: 'DEPLOY_AGENT_URL is not configured.' });
   }
 
-  // Step 2: Database migration
+  if (!deployWebhookToken) {
+    throw createError({ statusCode: 500, statusMessage: 'DEPLOY_WEBHOOK_TOKEN is not configured.' });
+  }
+
+  const url = `${deployAgentUrl.replace(/\/$/, '')}/deploy`;
+
   try {
-    const migrateOut = execSync(`php artisan migrate --force`, {
-      cwd: servicesDir,
-      encoding: 'utf8',
-      timeout: 120_000,
+    const result = await $fetch<{
+      success: boolean;
+      message: string;
+      jobId: string;
+      status: string;
+      logs: string[];
+    }>(url, {
+      method: 'POST',
+      headers: {
+        'x-deploy-token': deployWebhookToken,
+      },
+      timeout: 15_000,
     });
-    logs.push('Migrate: ' + migrateOut.trim());
-  } catch (e: any) {
+
+    return {
+      success: true,
+      message: result.message || 'Deployment started.',
+      jobId: result.jobId,
+      status: result.status,
+      logs: result.logs || ['Deployment started.'],
+    };
+  } catch (error: any) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Migration failed: ' + String(e?.stdout || e?.message),
+      statusCode: Number(error?.statusCode || error?.response?.status || 500),
+      statusMessage: String(error?.data?.message || error?.statusMessage || 'Unable to start deployment.'),
     });
   }
-
-  // Step 3: Clear caches
-  const cacheCmds = ['config:clear', 'route:clear', 'cache:clear', 'config:cache', 'route:cache'];
-  for (const cmd of cacheCmds) {
-    try {
-      execSync(`php artisan ${cmd}`, { cwd: servicesDir, encoding: 'utf8', timeout: 30_000 });
-      logs.push(cmd + ': OK');
-    } catch (e: any) {
-      logs.push(cmd + ' note: ' + String(e?.message || ''));
-    }
-  }
-
-  return {
-    success: true,
-    message: 'System updated successfully!',
-    logs,
-  };
 });
