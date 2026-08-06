@@ -9,12 +9,14 @@ export function normalizePublicImageUrl(input: unknown): string {
   const raw = String(input || '').trim();
   if (!raw) return '';
   if (raw.includes('..')) return '';
-  const directAssetPattern = /^\/?(products|banners|logos|icons)\/[a-zA-Z0-9._-]+\.(jpg|jpeg|png|webp|gif)$/i;
-  const uploadAssetPattern = /^\/?uploads\/(products|banners|logos|icons)\/[a-zA-Z0-9._-]+\.(jpg|jpeg|png|webp|gif)$/i;
-  if (directAssetPattern.test(raw) === false && uploadAssetPattern.test(raw) === false && /^https?:\/\//i.test(raw) === false) {
+  if (/^(javascript|data|vbscript):/i.test(raw)) {
     return '';
   }
+
   if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith('//')) return `https:${raw}`;
+
+  const safePath = raw.replace(/^\.?\//, '');
   if (raw.startsWith('/')) return `${ADMIN_ASSET_BASE}${raw}`;
-  return `${ADMIN_ASSET_BASE}/${raw}`;
+  return `${ADMIN_ASSET_BASE}/${safePath}`;
 }

@@ -31,6 +31,7 @@ const topSupportButtons = computed(() => {
   const list = Array.isArray(homeSettings.value?.topSupportButtons) ? homeSettings.value.topSupportButtons : [];
   return list.filter((item: any) => Boolean(item?.enabled));
 });
+const hasTopSupportButtons = computed(() => topSupportButtons.value.length > 0);
 const noticeText = computed(() => {
   return String(homeSettings.value?.notice || '').trim();
 });
@@ -296,16 +297,11 @@ onMounted(() => {
           </div>
         </a>
       </div>
-      <div v-else class="main-banner">
-        <a href="https://youtu.be/uacJPyfla2g?si=a2XiC0U0P6QZZcq7" target="_blank" rel="noopener">
-          <img src="https://admin.rgbazer.com/banners/1772818681.jpg" alt="RG Bazzer Banner">
-        </a>
-      </div>
       <div class="slider-indicator" aria-hidden="true">—</div>
     </div>
 
     <!-- Quick Action Support Buttons -->
-    <div v-if="homeSettings.showTopSupport" class="action-buttons">
+    <div v-if="homeSettings.showTopSupport && hasTopSupportButtons" class="action-buttons">
       <a
         v-for="btn in topSupportButtons"
         :key="btn.key"

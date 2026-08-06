@@ -10,6 +10,13 @@ function toFlag(value: unknown, fallback = 0) {
   return Number(value ?? fallback) === 1 ? 1 : 0;
 }
 
+function normalizeLink(input: unknown) {
+  const raw = String(input || '').trim();
+  if (!raw) return '';
+  if (/^(javascript|data|vbscript):/i.test(raw)) return '';
+  return raw;
+}
+
 export function readAdminSettingsRaw(): SettingsMap {
   if (!existsSync(SETTINGS_PATH)) return {};
   try {
@@ -38,23 +45,23 @@ export function buildHomeSettings() {
       enabled: toFlag(s.top_support_telegram_enabled, 1) === 1,
       label: String(s.top_support_telegram_label || 'Telegram').trim() || 'Telegram',
       sub: 'SUPPORT',
-      url: String(s.top_support_telegram_url || s.contact_telegram_url || '').trim()
+      url: normalizeLink(s.top_support_telegram_url || s.contact_telegram_url || s.global_group_url || '')
     },
     {
       key: 'group',
       enabled: toFlag(s.top_support_group_enabled, 1) === 1,
       label: String(s.top_support_group_label || 'Join Group').trim() || 'Join Group',
       sub: 'COMMUNITY',
-      url: String(s.top_support_group_url || s.global_group_url || '').trim()
+      url: normalizeLink(s.top_support_group_url || s.global_group_url || '')
     },
     {
       key: 'whatsapp',
       enabled: toFlag(s.top_support_whatsapp_enabled, 1) === 1,
       label: String(s.top_support_whatsapp_label || 'WhatsApp').trim() || 'WhatsApp',
       sub: 'CHAT',
-      url: String(s.top_support_whatsapp_url || s.global_whatsapp_url || s.contact_whatsapp_url || '').trim()
+      url: normalizeLink(s.top_support_whatsapp_url || s.global_whatsapp_url || s.contact_whatsapp_url || '')
     }
-  ].filter((item) => item.enabled && item.url);
+  ].filter((item) => item.enabled && Boolean(item.url));
 
   const pagePopupItems = (Array.isArray(s.home_page_popup_items) ? s.home_page_popup_items : [])
     .map((item: any) => ({

@@ -55,7 +55,11 @@ const siteIconUrl = computed(() => String(supportSettings.value?.site_icon_url |
 const primaryLogoUrl = computed(() =>
   String(supportSettings.value?.logo_primary_url || '').trim()
 );
-const appIconUrl = computed(() => primaryLogoUrl.value || siteIconUrl.value);
+const secondaryLogoUrl = computed(() =>
+  String(supportSettings.value?.logo_secondary_url || '').trim()
+);
+const headerLogoUrl = computed(() => primaryLogoUrl.value || secondaryLogoUrl.value || siteIconUrl.value);
+const appIconUrl = computed(() => headerLogoUrl.value || siteIconUrl.value);
 const themeColor = computed(() => {
   const raw = String(supportSettings.value?.theme_color || '').trim();
   return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw.toLowerCase() : '';
@@ -308,7 +312,7 @@ watch([pgwAppEnabled, pgwForceInstallEnabled, pwaInstalledPersisted], () => {
     <header class="fixed inset-x-0 top-0 z-50 h-[76px] border-b border-slate-200 bg-[#eef3fb]/95 backdrop-blur md:h-[84px]">
       <div class="mx-auto flex h-full max-w-6xl items-center justify-between px-3 py-2 lg:px-8 lg:py-3">
         <NuxtLink to="/" class="flex items-center gap-3" @click="closeMenu">
-          <img v-if="primaryLogoUrl" :src="primaryLogoUrl" alt="Logo" class="h-9 w-auto sm:h-10 md:h-12" />
+          <img v-if="headerLogoUrl" :src="headerLogoUrl" alt="Logo" class="h-9 w-auto sm:h-10 md:h-12" />
           <span v-else class="text-base font-black tracking-wide text-slate-900 sm:text-lg">{{ siteName || 'TOPUP' }}</span>
         </NuxtLink>
 

@@ -28,11 +28,24 @@ echo =========================================
 echo Services: Backend + User Frontend + Admin Frontend
 echo.
 
+set "BACKEND_CAN_START=1"
+powershell -NoProfile -Command "$v = [version]((php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>$null)); if ($null -eq $v -or $v -lt [version]'8.3') { exit 1 }" >nul 2>&1
+if errorlevel 1 (
+	set "BACKEND_CAN_START=0"
+	echo [WARN] Laravel backend requires PHP 8.3+ but current CLI PHP is lower or unavailable.
+	echo [WARN] Frontends will still start. Install/select PHP 8.3 to run backend on port 8000.
+	echo.
+)
+
 echo Freeing ports 8000, 3000, 3001...
 powershell -NoProfile -Command "$ports = @(8000,3000,3001); foreach ($port in $ports) { Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { if ($_){ Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue } } }"
 
-echo Starting Backend...
-start "Laravel Backend" cmd /k "call ""%BACKEND_SCRIPT%"""
+if "%BACKEND_CAN_START%"=="1" (
+	echo Starting Backend...
+	start "Laravel Backend" cmd /k "call ""%BACKEND_SCRIPT%"""
+) else (
+	echo Skipping Backend start due to PHP version check.
+)
 
 echo Starting User Frontend...
 start "User Frontend" cmd /k "call ""%USER_SCRIPT%"""

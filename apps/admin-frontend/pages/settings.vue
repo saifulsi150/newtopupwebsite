@@ -49,15 +49,48 @@ const uploadingField = ref('');
 const showEditModal = ref(false);
 const saveNotice = ref('');
 
+function normalizeSettingsPayload(input: Record<string, unknown> | undefined | null) {
+  const source = input || {};
+  return {
+    ...source,
+    slider_enabled: Number(source.slider_enabled ?? 0),
+    category_enabled: Number(source.category_enabled ?? 0),
+    top_support_enabled: Number(source.top_support_enabled ?? 0),
+    top_support_telegram_enabled: Number(source.top_support_telegram_enabled ?? 0),
+    top_support_group_enabled: Number(source.top_support_group_enabled ?? 0),
+    top_support_whatsapp_enabled: Number(source.top_support_whatsapp_enabled ?? 0),
+    latest_orders_enabled: Number(source.latest_orders_enabled ?? 0),
+    contact_whatsapp_enabled: Number(source.contact_whatsapp_enabled ?? 0),
+    contact_telegram_enabled: Number(source.contact_telegram_enabled ?? 0),
+    contact_email_enabled: Number(source.contact_email_enabled ?? 0),
+    contact_phone_enabled: Number(source.contact_phone_enabled ?? 0),
+    detect_popup_enabled: Number(source.detect_popup_enabled ?? 0),
+    pgw_app_enabled: Number(source.pgw_app_enabled ?? 0),
+    pgw_force_install_enabled: Number(source.pgw_force_install_enabled ?? 0),
+    home_page_popup_enabled: Number(source.home_page_popup_enabled ?? 0),
+    home_page_popup_limit_per_day: Number(source.home_page_popup_limit_per_day ?? 5),
+  };
+}
+
 watch(
   data,
   (val) => {
     if (val?.settings) {
-      Object.assign(form, val.settings);
+      Object.assign(form, normalizeSettingsPayload(val.settings));
     }
   },
   { immediate: true }
 );
+
+async function refreshSettingsFromServer() {
+  const response = await $fetch<{ success: boolean; settings: Record<string, unknown> }>('/api/settings', {
+    method: 'GET'
+  });
+  if (response?.settings) {
+    Object.assign(form, normalizeSettingsPayload(response.settings));
+    Object.assign(data.value?.settings || {}, response.settings);
+  }
+}
 
 async function saveSettings(showSuccess = true) {
   if (saving.value || autoSaving.value) return;
@@ -65,7 +98,13 @@ async function saveSettings(showSuccess = true) {
   else autoSaving.value = true;
   saved.value = false;
   try {
-    await $fetch('/api/settings', { method: 'POST', body: { ...form } });
+    const res = await $fetch<{ success: boolean; settings: Record<string, unknown> }>('/api/settings', { method: 'POST', body: { ...form } });
+    if (res?.settings) {
+      Object.assign(form, normalizeSettingsPayload(res.settings));
+      Object.assign(data.value?.settings || {}, res.settings);
+    } else {
+      await refreshSettingsFromServer();
+    }
     saveNotice.value = 'Successfully updated';
     saved.value = true;
     setTimeout(() => {
@@ -249,7 +288,7 @@ async function uploadImageForField(event: Event, field: 'logo_primary_url' | 'lo
             </thead>
             <tbody>
               <tr>
-                <td class="font-semibold text-slate-800">RG BAZZER</td>
+                <td class="font-semibold text-slate-800">{{ form.site_name || 'Website Name' }}</td>
                 <td>
                   <button
                     type="button"
@@ -458,6 +497,44 @@ async function uploadImageForField(event: Event, field: 'logo_primary_url' | 'lo
               <div>
                 <label class="mb-1 block text-xs font-semibold text-slate-500">Global Group URL</label>
                 <input v-model="form.global_group_url" type="text" class="admin-input" />
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 p-4">
+            <p class="mb-3 text-sm font-bold text-slate-700">Top Support Buttons</p>
+            <div class="space-y-3">
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label class="mb-1 block text-xs font-semibold text-slate-500">Telegram Label</label>
+                  <input v-model="form.top_support_telegram_label" type="text" class="admin-input" placeholder="Telegram" />
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs font-semibold text-slate-500">Telegram URL</label>
+                  <input v-model="form.top_support_telegram_url" type="text" class="admin-input" placeholder="https://t.me/..." />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label class="mb-1 block text-xs font-semibold text-slate-500">Group Label</label>
+                  <input v-model="form.top_support_group_label" type="text" class="admin-input" placeholder="Join Group" />
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs font-semibold text-slate-500">Group URL</label>
+                  <input v-model="form.top_support_group_url" type="text" class="admin-input" placeholder="https://t.me/..." />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label class="mb-1 block text-xs font-semibold text-slate-500">WhatsApp Label</label>
+                  <input v-model="form.top_support_whatsapp_label" type="text" class="admin-input" placeholder="WhatsApp" />
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs font-semibold text-slate-500">WhatsApp URL</label>
+                  <input v-model="form.top_support_whatsapp_url" type="text" class="admin-input" placeholder="https://wa.me/..." />
+                </div>
               </div>
             </div>
           </div>
