@@ -99,6 +99,7 @@ const updating = ref(false)
 const updateLogs = ref<string[]>([])
 const updateResult = ref<'success' | 'error' | null>(null)
 const updateJobId = ref('')
+const activeSystemAction = ref<'update' | 'start-app'>('update')
 let updatePollTimer: ReturnType<typeof setInterval> | null = null
 
 function stopUpdatePolling() {
@@ -112,7 +113,7 @@ async function pollUpdateStatus(jobId: string) {
   try {
     const status = await $fetch<{
       success: boolean
-      id: string
+      jobId: string
       status: 'running' | 'completed' | 'failed'
       logs: string[]
     }>('/api/system/update-status', {
@@ -126,12 +127,12 @@ async function pollUpdateStatus(jobId: string) {
       updateResult.value = 'success'
       updating.value = false
       stopUpdatePolling()
-      alert('System updated successfully!')
+      alert(activeSystemAction.value === 'start-app' ? 'App started successfully!' : 'System updated successfully!')
     } else if (status.status === 'failed') {
       updateResult.value = 'error'
       updating.value = false
       stopUpdatePolling()
-      alert('Update failed. See logs for details.')
+      alert(activeSystemAction.value === 'start-app' ? 'Start App failed. See logs for details.' : 'Update failed. See logs for details.')
     }
   } catch (e: any) {
     updateResult.value = 'error'
@@ -142,19 +143,24 @@ async function pollUpdateStatus(jobId: string) {
   }
 }
 
-async function handleSystemUpdate() {
-  if (!confirm('Are you sure? This will pull latest code from GitHub and run database migrations on the live server.')) return
+async function triggerSystemJob(endpoint: '/api/system/update' | '/api/system/start-app', action: 'update' | 'start-app', confirmMessage: string) {
+  if (!confirm(confirmMessage)) return
+
+  activeSystemAction.value = action
   stopUpdatePolling()
   updating.value = true
   updateLogs.value = []
   updateResult.value = null
+
   try {
-    const res = await $fetch<{ success: boolean; message: string; jobId: string; logs: string[] }>('/api/system/update', { method: 'POST' })
+    const res = await $fetch<{ success: boolean; message: string; jobId: string; logs: string[] }>(endpoint, { method: 'POST' })
     updateJobId.value = String(res.jobId || '')
     updateLogs.value = res.logs || []
+
     if (!updateJobId.value) {
-      throw new Error('Deployment job id was not returned.')
+      throw new Error('Job id was not returned.')
     }
+
     updatePollTimer = setInterval(() => {
       pollUpdateStatus(updateJobId.value)
     }, 3000)
@@ -163,8 +169,24 @@ async function handleSystemUpdate() {
     updateResult.value = 'error'
     stopUpdatePolling()
     updateLogs.value = [e?.data?.statusMessage || e?.message || 'Unknown error']
-    alert('Update failed: ' + (e?.data?.statusMessage || e?.message || 'Check server logs.'))
+    alert('Operation failed: ' + (e?.data?.statusMessage || e?.message || 'Check server logs.'))
   }
+}
+
+async function handleSystemUpdate() {
+  await triggerSystemJob(
+    '/api/system/update',
+    'update',
+    'Are you sure? This will pull latest code from GitHub and run database migrations on the live server.'
+  )
+}
+
+async function handleStartApp() {
+  await triggerSystemJob(
+    '/api/system/start-app',
+    'start-app',
+    'Start all apps now? This will (re)build and run services, user frontend, and admin frontend.'
+  )
 }
 
 onBeforeUnmount(() => {
@@ -407,15 +429,25 @@ async function uploadImageForField(event: Event, field: 'logo_primary_url' | 'lo
           <span class="text-base">🚀</span>
           <p class="text-sm font-bold text-slate-700">System Update</p>
         </div>
-        <p class="mb-3 text-xs text-slate-500">Pulls the latest code from GitHub (main branch), runs new database migrations, and clears all caches automatically.</p>
-        <button
-          :disabled="updating"
-          class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60 transition"
-          @click="handleSystemUpdate"
-        >
-          <span v-if="updating">⏳ Updating... Please wait</span>
-          <span v-else>🚀 Check &amp; Apply System Update</span>
-        </button>
+        <p class="mb-3 text-xs text-slate-500">Pulls latest code + migrations, and also lets you start all three app layers from one place.</p>
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            :disabled="updating"
+            class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60 transition"
+            @click="handleSystemUpdate"
+          >
+            <span v-if="updating && activeSystemAction === 'update'">⏳ Updating... Please wait</span>
+            <span v-else>🚀 Check &amp; Apply System Update</span>
+          </button>
+          <button
+            :disabled="updating"
+            class="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60 transition"
+            @click="handleStartApp"
+          >
+            <span v-if="updating && activeSystemAction === 'start-app'">⏳ Starting App... Please wait</span>
+            <span v-else>▶ Start App</span>
+          </button>
+        </div>
         <div v-if="updateLogs.length" class="mt-3 rounded-lg bg-slate-900 p-3 font-mono text-xs text-green-300 max-h-40 overflow-y-auto">
           <p v-for="(log, i) in updateLogs" :key="i" class="leading-relaxed">{{ log }}</p>
         </div>

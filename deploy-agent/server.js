@@ -5,9 +5,12 @@ import { randomUUID } from 'node:crypto';
 const port = Number(process.env.PORT || 8099);
 const token = String(process.env.DEPLOY_WEBHOOK_TOKEN || '').trim();
 const deployScriptPath = String(process.env.DEPLOY_SCRIPT_PATH || '/workspace/scripts/host-deploy.sh');
+const startServicesScriptPath = String(process.env.START_SERVICES_SCRIPT_PATH || '/workspace/scripts/start-services.sh');
+const startUserFrontendScriptPath = String(process.env.START_USER_FRONTEND_SCRIPT_PATH || '/workspace/scripts/start-user-frontend.sh');
+const startAdminFrontendScriptPath = String(process.env.START_ADMIN_FRONTEND_SCRIPT_PATH || '/workspace/scripts/start-admin-frontend.sh');
 const maxRunMs = Number(process.env.DEPLOY_MAX_MS || 20 * 60 * 1000);
 
-/** @type {Map<string, {id: string, status: 'running'|'completed'|'failed', startedAt: string, endedAt?: string, logs: string[]}>} */
+/** @type {Map<string, {id: string, action: 'deploy'|'start-app', status: 'running'|'completed'|'failed', startedAt: string, endedAt?: string, logs: string[]}>} */
 const jobs = new Map();
 let runningJobId = null;
 
@@ -29,18 +32,31 @@ function appendLog(job, chunk) {
   }
 }
 
-function startDeployJob() {
+function getPublicJob(job) {
+  return {
+    success: true,
+    jobId: job.id,
+    action: job.action,
+    status: job.status,
+    startedAt: job.startedAt,
+    endedAt: job.endedAt,
+    logs: job.logs,
+  };
+}
+
+function startJob(action, command) {
   const id = randomUUID();
   const job = {
     id,
+    action,
     status: 'running',
     startedAt: new Date().toISOString(),
-    logs: ['Deployment job started.'],
+    logs: [`${action} job started.`],
   };
   jobs.set(id, job);
   runningJobId = id;
 
-  const child = spawn('sh', [deployScriptPath], {
+  const child = spawn('sh', ['-c', command], {
     cwd: '/workspace',
     env: process.env,
   });
@@ -58,10 +74,10 @@ function startDeployJob() {
     job.endedAt = new Date().toISOString();
     if (code === 0) {
       job.status = 'completed';
-      appendLog(job, '[deploy-agent] Deployment finished successfully.');
+      appendLog(job, `[deploy-agent] ${action} finished successfully.`);
     } else {
       job.status = 'failed';
-      appendLog(job, `[deploy-agent] Deployment failed with exit code ${code}.`);
+      appendLog(job, `[deploy-agent] ${action} failed with exit code ${code}.`);
     }
     runningJobId = null;
   });
@@ -89,22 +105,32 @@ const server = createServer((req, res) => {
     return json(res, 401, { success: false, message: 'Unauthorized deploy request.' });
   }
 
-  if (req.method === 'POST' && url.pathname === '/deploy') {
+  if (req.method === 'POST' && (url.pathname === '/deploy' || url.pathname === '/start-app')) {
     if (runningJobId) {
-      return json(res, 409, {
-        success: false,
-        message: 'Another deployment is already running.',
-        jobId: runningJobId,
+      const runningJob = jobs.get(runningJobId);
+      if (!runningJob) {
+        runningJobId = null;
+      } else {
+        return json(res, 202, {
+          ...getPublicJob(runningJob),
+          message: 'Another job is already running. Returning current running job.',
+        });
+      }
+    }
+
+    if (url.pathname === '/deploy') {
+      const job = startJob('deploy', `sh ${deployScriptPath}`);
+      return json(res, 202, {
+        ...getPublicJob(job),
+        message: 'Deployment started.',
       });
     }
 
-    const job = startDeployJob();
+    const command = `sh ${startServicesScriptPath} && sh ${startUserFrontendScriptPath} && sh ${startAdminFrontendScriptPath}`;
+    const job = startJob('start-app', command);
     return json(res, 202, {
-      success: true,
-      message: 'Deployment started.',
-      jobId: job.id,
-      status: job.status,
-      logs: job.logs,
+      ...getPublicJob(job),
+      message: 'Start App job started.',
     });
   }
 
@@ -114,7 +140,7 @@ const server = createServer((req, res) => {
     if (!job) {
       return json(res, 404, { success: false, message: 'Deployment job not found.' });
     }
-    return json(res, 200, { success: true, ...job });
+    return json(res, 200, getPublicJob(job));
   }
 
   return json(res, 404, { success: false, message: 'Not found.' });
