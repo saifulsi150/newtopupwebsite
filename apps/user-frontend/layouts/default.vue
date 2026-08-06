@@ -51,6 +51,7 @@ const userAvatarSrc = computed(() => {
 
 const supportSettings = computed(() => contactSettingsData.value?.contact || {});
 const siteName = computed(() => String(supportSettings.value?.site_name || '').trim());
+const footerSiteName = computed(() => siteName.value || 'Website Name');
 const siteIconUrl = computed(() => String(supportSettings.value?.site_icon_url || '').trim());
 const primaryLogoUrl = computed(() =>
   String(supportSettings.value?.logo_primary_url || '').trim()
@@ -442,7 +443,7 @@ watch([pgwAppEnabled, pgwForceInstallEnabled, pwaInstalledPersisted], () => {
 
         <!-- COPYRIGHT -->
         <div class="border-t border-white/10 pt-6 text-center text-[12px] text-slate-400">
-          © RG BAZZER 2026 | All Rights Reserved | Developed by <span class="font-bold text-white">Team Mahal</span>
+          © {{ footerSiteName }} 2026 | All Rights Reserved | Developed by <span class="font-bold text-white">{{ footerSiteName }}</span>
         </div>
 
       </div>
