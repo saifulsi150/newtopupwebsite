@@ -14,11 +14,15 @@ fail() {
 }
 
 require_clean_git_state() {
-  if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
+  UNMERGED="$(git diff --name-only --diff-filter=U)"
+  if [ -n "${UNMERGED}" ]; then
+    printf '[deploy][ERROR] Unmerged files:\n%s\n' "${UNMERGED}" >&2
     fail "Unmerged files detected. Resolve conflicts before running System Update."
   fi
 
-  if [ -n "$(git status --porcelain)" ]; then
+  DIRTY="$(git status --porcelain)"
+  if [ -n "${DIRTY}" ]; then
+    printf '[deploy][ERROR] Dirty working tree entries:\n%s\n' "${DIRTY}" >&2
     fail "Working tree is not clean. Commit or stash local changes before update."
   fi
 }
