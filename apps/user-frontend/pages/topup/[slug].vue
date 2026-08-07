@@ -96,29 +96,6 @@ const packageOptions = computed(() => {
   }));
 });
 
-const hasProduct = computed(() => Boolean(data.value?.product?.id));
-const hasPackages = computed(() => packageOptions.value.length > 0);
-
-const unavailableMessage = computed(() => {
-  if (error.value) {
-    const status = Number((error.value as any)?.statusCode || (error.value as any)?.status || 0);
-    if (status === 404) return 'Package not found.';
-    return 'Unable to load this page right now.';
-  }
-
-  if (!data.value || !hasProduct.value) {
-    return 'Product not found.';
-  }
-
-  if (!hasPackages.value) {
-    return 'Package not found.';
-  }
-
-  return '';
-});
-
-const showUnavailable = computed(() => !pending.value && unavailableMessage.value.length > 0);
-
 const selected = computed(() => {
   return packageOptions.value.find((item) => item.id === selectedPackageId.value) || null;
 });
@@ -243,67 +220,59 @@ async function checkPlayerName() {
       <div v-if="pending" class="card-panel mt-6 p-10 text-center text-slate-600">
         Preparing your checkout...
       </div>
-      <div v-else-if="showUnavailable" class="card-panel mt-6 border-rose-200 bg-rose-50 p-10 text-center text-rose-600">
-        {{ unavailableMessage }}
+      <div v-else-if="error || !data" class="card-panel mt-6 border-rose-200 bg-rose-50 p-10 text-center text-rose-600">
+        This product is not available right now.
       </div>
 
       <div v-else class="mt-2 grid gap-3 lg:grid-cols-[1.12fr_0.88fr]">
         <div class="space-y-6">
-          <div class="product-hero rounded-2xl border border-[#d5e1ee] bg-white p-2.5 sm:p-4">
+          <div class="rounded-lg border border-slate-200 bg-white p-2.5 sm:p-4">
             <div class="flex items-center gap-3 sm:gap-4">
-              <img :src="data.product.image_url" :alt="data.product.title" class="h-[74px] w-[74px] rounded-xl border border-slate-200 object-cover sm:h-24 sm:w-24" loading="lazy" decoding="async" />
-              <div class="min-w-0">
-                <h1 class="product-title-main">{{ data.product.title }}</h1>
-                <p class="mt-1 text-[12px] font-semibold tracking-wide text-slate-500">Game / Top up</p>
-                <p class="hero-status mt-2 inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1 text-[12px] font-bold">
-                  <span>⚡</span>
-                  <span>১ সেকেন্ডে টপআপ</span>
-                </p>
+              <img :src="data.product.image_url" :alt="data.product.title" class="h-[74px] w-[74px] rounded-md border border-slate-200 object-cover sm:h-24 sm:w-24" loading="lazy" decoding="async" />
+              <div>
+                <h1 class="text-[14px] font-medium text-slate-900 sm:text-2xl">{{ data.product.title }}</h1>
+                <p class="mt-1 text-[12px] text-slate-500">Game / Top up</p>
               </div>
             </div>
           </div>
 
           <!-- Section 1: Select Recharge -->
-          <div class="package-shell rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_6px_16px_rgba(15,23,42,0.04)] sm:p-4">
+          <div class="rounded-lg border border-slate-200 bg-white p-3 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-4">
             <div class="mb-3 flex items-center gap-3 border-b border-slate-200 pb-3">
               <div class="theme-badge flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white">1</div>
-              <div class="leading-tight">
-                <h2 class="recharge-title">Select Recharge</h2>
-                <p class="recharge-sub">Choose your package and continue checkout</p>
-              </div>
+              <h2 class="text-[18px] font-black leading-none text-slate-900">Select Recharge</h2>
             </div>
 
             <!-- Packages Grid -->
-            <div class="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            <div class="mt-2 grid grid-cols-2 gap-2 sm:gap-2.5">
               <button
                 v-for="item in packageOptions"
                 :key="item.id"
                 type="button"
-                class="package-card group relative overflow-hidden rounded-xl border px-3 py-3.5 text-left transition-all min-h-[72px] shadow-sm select-none"
+                class="relative rounded-md border px-2.5 py-3 text-left transition-all min-h-[66px] shadow-sm select-none"
                 :class="selectedPackageId === item.id 
                   ? 'pkg-selected'
-                  : 'border-[#d8deea] bg-white hover:border-[#b8c9de]'"
+                  : 'border-[#d5d9e1] bg-white hover:border-slate-300'"
                 @click="selectedPackageId = item.id"
               >
-                <span v-if="selectedPackageId === item.id" class="pkg-corner">Selected</span>
                 <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex min-w-0 flex-1 items-start gap-2.5 text-[12px] font-bold text-slate-800 leading-5 sm:text-[13px]">
+                  <div class="flex min-w-0 flex-1 items-center gap-2 text-[12px] font-semibold text-slate-800 leading-4 sm:text-[13px]">
                     
                     <!-- Selected Check Icon -->
                     <span 
                       v-if="selectedPackageId === item.id" 
-                      class="theme-badge-sm flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white"
+                      class="theme-badge-sm flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-white"
                     >
-                      <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                      <svg class="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     </span>
-                    <span v-else class="h-5 w-5 shrink-0 rounded-full border border-slate-300 bg-slate-50" />
+                    <span v-else class="h-4 w-4 shrink-0 rounded-full border border-slate-300 bg-slate-50" />
                     
-                    <span class="package-title-text">{{ normalizePackageText(item.title) }} {{ packageSuffix(item.title) }}</span>
+                    <span class="truncate whitespace-nowrap">{{ normalizePackageText(item.title) }} {{ packageSuffix(item.title) }}</span>
                   </div>
-                  <div class="package-price shrink-0 whitespace-nowrap text-[14px] font-black leading-5 sm:text-[16px]">
-                    {{ item.price }}<span class="ml-1 text-[11px] font-extrabold sm:text-[12px]">TK</span>
+                  <div class="shrink-0 whitespace-nowrap text-[13px] font-bold leading-4 text-theme sm:text-[14px]">
+                    {{ item.price }} TK
                   </div>
                 </div>
               </button>
@@ -435,14 +404,14 @@ async function checkPlayerName() {
               </div>
             </div>
 
-            <div class="mt-4 space-y-2 rounded-xl border border-slate-200/70 bg-slate-50/70 px-3 py-3">
-              <div class="flex items-center justify-between gap-3 text-sm text-slate-700">
-                <span class="font-semibold">Selected package</span>
-                <span class="text-right font-semibold text-slate-900">{{ selected?.title || 'Choose one' }}</span>
+            <div class="mt-6 rounded-[24px] border border-slate-200 bg-white p-4">
+              <div class="flex items-center justify-between text-sm text-slate-600">
+                <span>Selected package</span>
+                <span>{{ selected?.title || 'Choose one' }}</span>
               </div>
-              <div class="flex items-center justify-between gap-3 text-sm text-slate-700">
-                <span class="font-semibold">Total amount</span>
-                <span class="text-theme text-xl font-black leading-none">৳{{ total }}</span>
+              <div class="mt-3 flex items-center justify-between text-sm text-slate-600">
+                <span>Total</span>
+                <span class="text-theme text-2xl font-black">৳{{ total }}</span>
               </div>
             </div>
 
@@ -482,79 +451,10 @@ async function checkPlayerName() {
 .text-theme {
   color: var(--theme-color);
 }
-.product-hero {
-  background:
-    radial-gradient(120% 180% at 100% 0%, rgba(16, 122, 60, 0.14), transparent 45%),
-    linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
-}
-.product-title-main {
-  font-size: clamp(1.15rem, 2.1vw, 1.9rem);
-  line-height: 1.18;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  color: #17243a;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-.hero-status {
-  color: #0f7134;
-  background: linear-gradient(180deg, #f3fbf7 0%, #e7f8ef 100%);
-  border: 1px solid #cbeedb;
-}
-.package-shell {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(250, 253, 255, 0.98) 100%),
-    radial-gradient(80% 110% at 100% 0%, rgba(62, 124, 190, 0.08), transparent 56%);
-}
-.recharge-title {
-  font-size: clamp(1.2rem, 2vw, 1.85rem);
-  line-height: 1.1;
-  font-weight: 900;
-  letter-spacing: -0.01em;
-  color: #11253f;
-}
-.recharge-sub {
-  margin-top: 0.2rem;
-  font-size: 0.74rem;
-  line-height: 1.1;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #5f7191;
-}
-.package-card {
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-}
-.package-title-text {
-  white-space: normal;
-  overflow-wrap: anywhere;
-  display: block;
-  line-height: 1.25;
-}
-.package-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
-}
 .pkg-selected {
   border: 1px solid var(--theme-color);
-  background: linear-gradient(180deg, #f4fbf7 0%, #eaf8f0 100%);
-  box-shadow: 0 0 0 1px var(--theme-color) inset, 0 10px 24px rgba(15, 113, 52, 0.14);
-}
-.pkg-corner {
-  position: absolute;
-  right: 0;
-  top: 0;
-  padding: 0.16rem 0.45rem;
-  font-size: 0.61rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: #ffffff;
-  background: linear-gradient(180deg, #1d8a48 0%, #0f7134 100%);
-  border-bottom-left-radius: 0.55rem;
-}
-.package-price {
-  color: #ec5b14;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  background: #f8fafc;
+  box-shadow: 0 0 0 1px var(--theme-color) inset;
 }
 .pay-selected {
   border-color: var(--theme-color);
