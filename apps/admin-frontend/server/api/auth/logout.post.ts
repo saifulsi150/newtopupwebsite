@@ -1,0 +1,12 @@
+import { defineEventHandler, deleteCookie } from 'h3';
+
+export default defineEventHandler((event) => {
+  deleteCookie(event, 'admin_token', {
+    path: '/',
+  });
+
+  return {
+    success: true,
+    message: 'Logged out successfully.',
+  };
+});

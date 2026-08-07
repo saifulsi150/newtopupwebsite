@@ -147,7 +147,7 @@ function stopUpdatePolling() {
   }
 }
 
-async function pollUpdateStatus(jobId: string) {
+async function pollUpdateStatus(jobId: string, endpoint: '/api/system/update' | '/api/system/start-app') {
   try {
     const status = await $fetch<{
       success: boolean
@@ -164,24 +164,27 @@ async function pollUpdateStatus(jobId: string) {
     if (status.status === 'completed') {
       updateResult.value = 'success'
       updating.value = false
+      restarting.value = false
       stopUpdatePolling()
-      alert('System updated successfully!')
+      alert(endpoint === '/api/system/start-app' ? 'Services restarted successfully!' : 'System updated successfully!')
     } else if (status.status === 'failed') {
       updateResult.value = 'error'
       updating.value = false
+      restarting.value = false
       stopUpdatePolling()
-      alert('Update failed. See logs for details.')
+      alert(endpoint === '/api/system/start-app' ? 'Restart failed. See logs for details.' : 'Update failed. See logs for details.')
     }
   } catch (e: any) {
     updateResult.value = 'error'
     updating.value = false
+    restarting.value = false
     stopUpdatePolling()
     updateLogs.value = [e?.data?.statusMessage || e?.message || 'Unable to read update status']
-    alert('Update status check failed: ' + (e?.data?.statusMessage || e?.message || 'Unknown error'))
+    alert('Operation status check failed: ' + (e?.data?.statusMessage || e?.message || 'Unknown error'))
   }
 }
 
-async function triggerSystemJob(endpoint: '/api/system/update', confirmMessage: string) {
+async function triggerSystemJob(endpoint: '/api/system/update' | '/api/system/start-app', confirmMessage: string) {
   if (!confirm(confirmMessage)) return
 
   stopUpdatePolling()
@@ -199,11 +202,13 @@ async function triggerSystemJob(endpoint: '/api/system/update', confirmMessage: 
     }
 
     updatePollTimer = setInterval(() => {
-      pollUpdateStatus(updateJobId.value)
+      pollUpdateStatus(updateJobId.value, endpoint)
     }, 3000)
-    await pollUpdateStatus(updateJobId.value)
+    await pollUpdateStatus(updateJobId.value, endpoint)
   } catch (e: any) {
     updateResult.value = 'error'
+    updating.value = false
+    restarting.value = false
     stopUpdatePolling()
     updateLogs.value = [e?.data?.statusMessage || e?.message || 'Unknown error']
     alert('Operation failed: ' + (e?.data?.statusMessage || e?.message || 'Check server logs.'))
@@ -222,13 +227,16 @@ onBeforeUnmount(() => {
 })
 
 async function restartAdminApp() {
+  restarting.value = true
   try {
-    const res = await $fetch<any>('/api/settings/restart', { method: 'POST' });
-    alert(res?.message || 'Restart started. Please refresh after a short wait.');
+    await triggerSystemJob(
+      '/api/system/start-app',
+      'Are you sure? This will restart backend, user frontend, and admin frontend services.'
+    )
   } catch (e: any) {
-    alert(e?.data?.statusMessage || 'Restart failed');
+    alert(e?.data?.statusMessage || 'Restart failed')
   } finally {
-    restarting.value = false;
+    if (!updating.value) restarting.value = false
   }
 }
 

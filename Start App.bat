@@ -28,6 +28,8 @@ echo =========================================
 echo Services: Backend + User Frontend + Admin Frontend
 echo.
 
+if not defined FORCE_PORT_CLEANUP set "FORCE_PORT_CLEANUP=0"
+
 set "BACKEND_CAN_START=1"
 powershell -NoProfile -Command "$v = [version]((php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>$null)); if ($null -eq $v -or $v -lt [version]'8.3') { exit 1 }" >nul 2>&1
 if errorlevel 1 (
@@ -37,8 +39,12 @@ if errorlevel 1 (
 	echo.
 )
 
-echo Freeing ports 8000, 3000, 3001...
-powershell -NoProfile -Command "$ports = @(8000,3000,3001); foreach ($port in $ports) { Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { if ($_){ Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue } } }"
+if "%FORCE_PORT_CLEANUP%"=="1" (
+	echo Force cleanup enabled. Freeing ports 8000, 3000, 3001...
+	powershell -NoProfile -Command "$ports = @(8000,3000,3001); foreach ($port in $ports) { Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { if ($_){ Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue } } }"
+) else (
+	echo Keeping existing running services (set FORCE_PORT_CLEANUP=1 for hard restart).
+)
 
 if "%BACKEND_CAN_START%"=="1" (
 	echo Starting Backend...
@@ -61,7 +67,11 @@ echo.
 echo Opening websites in browser...
 start "" http://127.0.0.1:3000
 start "" http://127.0.0.1:3001
-start "" http://127.0.0.1:8000
+if "%BACKEND_CAN_START%"=="1" (
+	start "" http://127.0.0.1:8000
+) else (
+	echo Backend URL not opened because PHP 8.3+ is not available.
+)
 
 echo.
 echo Done. You can now use the websites.

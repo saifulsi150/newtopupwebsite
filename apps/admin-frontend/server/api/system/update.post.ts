@@ -43,9 +43,27 @@ export default defineEventHandler(async (event) => {
       logs: result.logs || ['Deployment started.'],
     };
   } catch (error: any) {
-    throw createError({
-      statusCode: Number(error?.statusCode || error?.response?.status || 500),
-      statusMessage: String(error?.data?.message || error?.statusMessage || 'Unable to start deployment.'),
-    });
+    const statusCode = Number(error?.statusCode || error?.response?.status || 500);
+    const statusMessage = String(error?.data?.message || error?.statusMessage || 'Unable to start deployment.');
+
+    if (statusCode === 401 || statusCode === 403) {
+      throw createError({
+        statusCode,
+        statusMessage: 'Deploy agent token mismatch. Sync DEPLOY_WEBHOOK_TOKEN between admin-frontend and deploy-agent.',
+      });
+    }
+
+    const localJob = startLocalSystemUpdateJob();
+    const localResult = toPublicSystemJob(localJob);
+    return {
+      success: true,
+      message: `Deploy agent unreachable (${statusMessage}). Running local update fallback.`,
+      jobId: localResult.jobId,
+      status: localResult.status,
+      logs: [
+        `[fallback] Deploy agent request failed: ${statusMessage}`,
+        ...(localResult.logs || []),
+      ],
+    };
   }
 });

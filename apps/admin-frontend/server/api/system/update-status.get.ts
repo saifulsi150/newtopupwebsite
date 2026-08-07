@@ -38,8 +38,16 @@ export default defineEventHandler(async (event) => {
       timeout: 10_000,
     });
   } catch (error: any) {
+    const statusCode = Number(error?.statusCode || error?.response?.status || 500);
+    if (statusCode === 401 || statusCode === 403) {
+      throw createError({
+        statusCode,
+        statusMessage: 'Deploy agent token mismatch. Sync DEPLOY_WEBHOOK_TOKEN between admin-frontend and deploy-agent.',
+      });
+    }
+
     throw createError({
-      statusCode: Number(error?.statusCode || error?.response?.status || 500),
+      statusCode,
       statusMessage: String(error?.data?.message || error?.statusMessage || 'Unable to read deployment status.'),
     });
   }

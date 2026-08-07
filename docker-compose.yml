@@ -99,9 +99,12 @@ services:
       DEPLOY_AGENT_URL: ${DEPLOY_AGENT_URL:-http://deploy-agent:8099}
       DEPLOY_WEBHOOK_TOKEN: ${DEPLOY_WEBHOOK_TOKEN}
       NUXT_PUBLIC_SITE_NAME: ${NUXT_PUBLIC_SITE_NAME}
+    volumes:
+      - tast_admin_frontend_data:/app/.data
     ports:
       - "${ADMIN_FRONTEND_PORT:-3001}:3001"
 
 volumes:
   tast_mysql_data:
   tast_redis_data:
+  tast_admin_frontend_data:

@@ -40,22 +40,51 @@ function getRepoRoot() {
 function buildLocalUpdateCommand() {
   if (process.platform === 'win32') {
     return [
-      'Write-Host "[local-update] Pulling latest code..."',
-      'git pull origin main',
+      "$ErrorActionPreference = 'Stop'",
+      'Write-Host "[local-update] Running git pre-checks..."',
+      "$unmerged = git diff --name-only --diff-filter=U",
+      'if ($LASTEXITCODE -ne 0) { throw "Unable to inspect git merge state." }',
+      'if ($unmerged) { throw "Unmerged files detected. Resolve conflicts before update." }',
+      "$dirty = git status --porcelain",
+      'if ($LASTEXITCODE -ne 0) { throw "Unable to inspect git working tree state." }',
+      'if ($dirty) { throw "Working tree is not clean. Commit or stash local changes before update." }',
+      'Write-Host "[local-update] Fetching latest code metadata..."',
+      'git fetch origin main',
+      'if ($LASTEXITCODE -ne 0) { throw "git fetch failed." }',
+      "$behind = git rev-list --count HEAD..origin/main",
+      'if ($LASTEXITCODE -ne 0) { throw "Unable to compare local branch with origin/main." }',
+      'if ([int]$behind -gt 0) {',
+      '  Write-Host "[local-update] Pulling latest code..."',
+      '  git pull --ff-only origin main',
+      '  if ($LASTEXITCODE -ne 0) { throw "Fast-forward pull failed." }',
+      '} else {',
+      '  Write-Host "[local-update] Repository is already up-to-date."',
+      '}',
       'Write-Host "[local-update] Running Laravel migrations..."',
       'Set-Location services',
       'php artisan migrate --force',
+      'if ($LASTEXITCODE -ne 0) { throw "Laravel migration failed." }',
       'Write-Host "[local-update] Clearing and rebuilding caches..."',
       'php artisan optimize:clear',
+      'if ($LASTEXITCODE -ne 0) { throw "php artisan optimize:clear failed." }',
       'php artisan config:cache',
+      'if ($LASTEXITCODE -ne 0) { throw "php artisan config:cache failed." }',
       'php artisan route:cache',
-      'php artisan view:cache'
+      'if ($LASTEXITCODE -ne 0) { throw "php artisan route:cache failed." }',
+      'php artisan view:cache',
+      'if ($LASTEXITCODE -ne 0) { throw "php artisan view:cache failed." }'
     ].join('; ');
   }
 
   return [
-    'echo "[local-update] Pulling latest code..."',
-    'git pull origin main',
+    'set -eu',
+    'echo "[local-update] Running git pre-checks..."',
+    '[ -z "$(git diff --name-only --diff-filter=U)" ] || { echo "Unmerged files detected. Resolve conflicts before update."; exit 1; }',
+    '[ -z "$(git status --porcelain)" ] || { echo "Working tree is not clean. Commit or stash local changes before update."; exit 1; }',
+    'echo "[local-update] Fetching latest code metadata..."',
+    'git fetch origin main',
+    'BEHIND="$(git rev-list --count HEAD..origin/main)"',
+    'if [ "$BEHIND" -gt 0 ]; then git pull --ff-only origin main; else echo "[local-update] Repository is already up-to-date."; fi',
     'echo "[local-update] Running Laravel migrations..."',
     'cd services',
     'php artisan migrate --force',
@@ -70,6 +99,7 @@ function buildLocalUpdateCommand() {
 function buildLocalStartCommand() {
   if (process.platform === 'win32') {
     return [
+      "$ErrorActionPreference = 'Stop'",
       'Write-Host "[local-start] Starting full app stack..."',
       '& ".\\Start App.bat"'
     ].join('; ');

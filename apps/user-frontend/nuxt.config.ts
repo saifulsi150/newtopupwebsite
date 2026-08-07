@@ -1,3 +1,18 @@
+function resolveAllowedHosts() {
+  const envHosts = String(process.env.NUXT_ALLOWED_HOSTS || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return Array.from(new Set([
+    process.env.APP_DOMAIN || "tast.ffuid.shop",
+    process.env.ADMIN_DOMAIN || "admin.ffuid.shop",
+    "localhost",
+    "127.0.0.1",
+    ...envHosts
+  ]));
+}
+
 export default defineNuxtConfig({
   ssr: true,
   compatibilityDate: "2026-07-29",
@@ -60,12 +75,7 @@ export default defineNuxtConfig({
   },
   vite: {
     server: {
-      allowedHosts: [
-        process.env.APP_DOMAIN || "tast.ffuid.shop",
-        process.env.ADMIN_DOMAIN || "admin.ffuid.shop",
-        "localhost",
-        "127.0.0.1"
-      ]
+      allowedHosts: resolveAllowedHosts()
     },
     build: {
       target: "es2022",

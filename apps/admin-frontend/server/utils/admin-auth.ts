@@ -1,4 +1,4 @@
-import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 
@@ -10,7 +10,9 @@ type StoredAdmin = {
   updatedAt: string;
 };
 
-const STORAGE_PATH = join(process.cwd(), '.data', 'admin-auth.json');
+const STORAGE_PATH = process.env.ADMIN_AUTH_STORAGE_PATH
+  ? String(process.env.ADMIN_AUTH_STORAGE_PATH)
+  : join(process.cwd(), '.data', 'admin-auth.json');
 
 function hashPassword(password: string, salt?: string) {
   const resolvedSalt = salt || randomBytes(16).toString('hex');
@@ -42,11 +44,17 @@ function ensureStorageDir() {
   mkdirSync(dirname(STORAGE_PATH), { recursive: true });
 }
 
+function writeAdminFile(payload: StoredAdmin) {
+  const tempPath = `${STORAGE_PATH}.tmp`;
+  writeFileSync(tempPath, JSON.stringify(payload, null, 2));
+  renameSync(tempPath, STORAGE_PATH);
+}
+
 export function loadAdminAuth() {
   ensureStorageDir();
   if (!existsSync(STORAGE_PATH)) {
     const fallback = buildDefaultAdmin();
-    writeFileSync(STORAGE_PATH, JSON.stringify(fallback, null, 2));
+    writeAdminFile(fallback);
     return fallback;
   }
 
@@ -64,7 +72,7 @@ export function loadAdminAuth() {
     } satisfies StoredAdmin;
   } catch {
     const fallback = buildDefaultAdmin();
-    writeFileSync(STORAGE_PATH, JSON.stringify(fallback, null, 2));
+    writeAdminFile(fallback);
     return fallback;
   }
 }
@@ -76,7 +84,7 @@ export function saveAdminAuth(nextAdmin: Omit<StoredAdmin, 'updatedAt'>) {
     email: nextAdmin.email.trim().toLowerCase(),
     updatedAt: new Date().toISOString()
   };
-  writeFileSync(STORAGE_PATH, JSON.stringify(payload, null, 2));
+  writeAdminFile(payload);
   return payload;
 }
 

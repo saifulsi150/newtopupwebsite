@@ -1,7 +1,9 @@
 export const useAdminAuth = () => {
   const cookie = useCookie<string | null>('admin_token', {
     sameSite: 'lax',
-    maxAge: 60 * 60 * 8, // 8 hours
+    maxAge: 60 * 60 * 12,
+    path: '/',
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: false
   });
 

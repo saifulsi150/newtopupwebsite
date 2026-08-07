@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
 
 const port = Number(process.env.PORT || 8099);
 const token = String(process.env.DEPLOY_WEBHOOK_TOKEN || '').trim();
@@ -42,6 +43,12 @@ function getPublicJob(job) {
     endedAt: job.endedAt,
     logs: job.logs,
   };
+}
+
+function assertScriptExists(scriptPath, label) {
+  if (!existsSync(scriptPath)) {
+    throw new Error(`${label} script was not found at: ${scriptPath}`);
+  }
 }
 
 function startJob(action, command) {
@@ -97,12 +104,25 @@ const server = createServer((req, res) => {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
   if (req.method === 'GET' && url.pathname === '/health') {
-    return json(res, 200, { ok: true, runningJobId });
+    return json(res, 200, {
+      ok: true,
+      runningJobId,
+      tokenConfigured: Boolean(token),
+      scripts: {
+        deploy: deployScriptPath,
+        startServices: startServicesScriptPath,
+        startUserFrontend: startUserFrontendScriptPath,
+        startAdminFrontend: startAdminFrontendScriptPath,
+      },
+    });
   }
 
   const authToken = String(req.headers['x-deploy-token'] || '').trim();
   if (!token || authToken !== token) {
-    return json(res, 401, { success: false, message: 'Unauthorized deploy request.' });
+    return json(res, 401, {
+      success: false,
+      message: 'Unauthorized deploy request. Deploy token is missing or does not match DEPLOY_WEBHOOK_TOKEN.',
+    });
   }
 
   if (req.method === 'POST' && (url.pathname === '/deploy' || url.pathname === '/start-app')) {
@@ -119,11 +139,25 @@ const server = createServer((req, res) => {
     }
 
     if (url.pathname === '/deploy') {
+      try {
+        assertScriptExists(deployScriptPath, 'Deploy');
+      } catch (error) {
+        return json(res, 500, { success: false, message: String(error.message || error) });
+      }
+
       const job = startJob('deploy', `sh ${deployScriptPath}`);
       return json(res, 202, {
         ...getPublicJob(job),
         message: 'Deployment started.',
       });
+    }
+
+    try {
+      assertScriptExists(startServicesScriptPath, 'Start services');
+      assertScriptExists(startUserFrontendScriptPath, 'Start user frontend');
+      assertScriptExists(startAdminFrontendScriptPath, 'Start admin frontend');
+    } catch (error) {
+      return json(res, 500, { success: false, message: String(error.message || error) });
     }
 
     const command = `sh ${startServicesScriptPath} && sh ${startUserFrontendScriptPath} && sh ${startAdminFrontendScriptPath}`;
