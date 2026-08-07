@@ -123,10 +123,6 @@ function normalizePackageText(title: string) {
   return title.replace(/\s+/g, ' ').trim();
 }
 
-function packageSuffix(title: string) {
-  return /weekly|monthly/i.test(title) ? '💳' : '💎';
-}
-
 async function submitOrder() {
   orderError.value = '';
 
@@ -226,6 +222,7 @@ async function checkPlayerName() {
 
       <div v-else class="mt-2 grid gap-3 lg:grid-cols-[1.12fr_0.88fr]">
         <div class="space-y-6">
+          <!-- Product Info Header -->
           <div class="rounded-lg border border-slate-200 bg-white p-2.5 sm:p-4">
             <div class="flex items-center gap-3 sm:gap-4">
               <img :src="data.product.image_url" :alt="data.product.title" class="h-[74px] w-[74px] rounded-md border border-slate-200 object-cover sm:h-24 sm:w-24" loading="lazy" decoding="async" />
@@ -243,37 +240,36 @@ async function checkPlayerName() {
               <h2 class="text-[18px] font-black leading-none text-slate-900">Select Recharge</h2>
             </div>
 
-            <!-- Packages Grid -->
-            <div class="mt-2 grid grid-cols-2 gap-2 sm:gap-2.5">
+            <!-- Packages Grid (Match Blade Style) -->
+            <div class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-2.5">
               <button
                 v-for="item in packageOptions"
                 :key="item.id"
                 type="button"
-                class="relative rounded-md border px-2.5 py-3 text-left transition-all min-h-[66px] shadow-sm select-none"
+                class="relative h-[50px] w-full rounded-md border px-2.5 text-left transition-all shadow-sm select-none flex items-center justify-between"
                 :class="selectedPackageId === item.id 
                   ? 'pkg-selected'
                   : 'border-[#d5d9e1] bg-white hover:border-slate-300'"
                 @click="selectedPackageId = item.id"
               >
-                <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex min-w-0 flex-1 items-center gap-2 text-[12px] font-semibold text-slate-800 leading-4 sm:text-[13px]">
-                    
-                    <!-- Selected Check Icon -->
-                    <span 
-                      v-if="selectedPackageId === item.id" 
-                      class="theme-badge-sm flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-white"
-                    >
-                      <svg class="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                    <span v-else class="h-4 w-4 shrink-0 rounded-full border border-slate-300 bg-slate-50" />
-                    
-                    <span class="truncate whitespace-nowrap">{{ normalizePackageText(item.title) }} {{ packageSuffix(item.title) }}</span>
-                  </div>
-                  <div class="shrink-0 whitespace-nowrap text-[13px] font-bold leading-4 text-theme sm:text-[14px]">
-                    {{ item.price }} TK
-                  </div>
+                <!-- Title and Selection Check Box -->
+                <div class="flex min-w-0 flex-1 items-center gap-1.5 text-[11px] font-semibold text-slate-800 leading-tight">
+                  <span 
+                    v-if="selectedPackageId === item.id" 
+                    class="theme-badge-sm flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-white"
+                  >
+                    <svg class="h-2 w-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                  <span v-else class="h-3.5 w-3.5 shrink-0 rounded-full border border-slate-300 bg-slate-50" />
+                  
+                  <span class="truncate whitespace-nowrap text-[11px] text-slate-800">{{ normalizePackageText(item.title) }}</span>
+                </div>
+
+                <!-- Price (Blade Style Fix) -->
+                <div class="shrink-0 whitespace-nowrap min-w-[46px] text-right text-[11px] font-bold text-theme">
+                  {{ item.price }} TK
                 </div>
               </button>
             </div>
@@ -315,7 +311,6 @@ async function checkPlayerName() {
               </label>
 
               <template v-if="Number(data.product.uid_checker) === 1">
-                <!-- After successful check: show name prominently like a result card -->
                 <div
                   v-if="uidCheckMessage && !uidCheckLoading"
                   class="uid-result-card w-full cursor-pointer rounded-lg px-4 py-3 text-center text-lg font-bold transition"
@@ -326,7 +321,6 @@ async function checkPlayerName() {
                 >
                   {{ uidCheckMessage }}
                 </div>
-                <!-- Check button (shown when no result yet or re-check) -->
                 <button
                   v-else
                   type="button"
@@ -355,7 +349,6 @@ async function checkPlayerName() {
                 :class="paymentMethod === 'wallet' ? 'pay-selected' : 'border-slate-300 bg-white hover:border-slate-400'" 
                 @click="paymentMethod = 'wallet'"
               >
-                <!-- Tick Badge for Payment Selection -->
                 <div v-if="paymentMethod === 'wallet'" class="theme-badge absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-bl-md text-white">
                   <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
@@ -377,7 +370,6 @@ async function checkPlayerName() {
                 :class="paymentMethod === 'instant' ? 'pay-selected' : 'border-slate-300 bg-white hover:border-slate-400'" 
                 @click="paymentMethod = 'instant'"
               >
-                <!-- Tick Badge for Payment Selection -->
                 <div v-if="paymentMethod === 'instant'" class="theme-badge absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-bl-md text-white">
                   <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
