@@ -240,7 +240,7 @@ async function checkPlayerName() {
               <h2 class="text-[18px] font-black leading-none text-slate-900">Select Recharge</h2>
             </div>
 
-            <!-- Packages Grid (Match Blade Style) -->
+            <!-- Packages Grid -->
             <div class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-2.5">
               <button
                 v-for="item in packageOptions"
@@ -267,7 +267,7 @@ async function checkPlayerName() {
                   <span class="truncate whitespace-nowrap text-[11px] text-slate-800">{{ normalizePackageText(item.title) }}</span>
                 </div>
 
-                <!-- Price (Blade Style Fix) -->
+                <!-- Price -->
                 <div class="shrink-0 whitespace-nowrap min-w-[46px] text-right text-[11px] font-bold text-theme">
                   {{ item.price }} TK
                 </div>
@@ -393,17 +393,6 @@ async function checkPlayerName() {
               <div class="flex items-center justify-between gap-3">
                 <span>প্রোডাক্ট কিনতে আপনার প্রয়োজন</span>
                 <span class="text-theme font-semibold">৳ {{ total }}</span>
-              </div>
-            </div>
-
-            <div class="mt-6 rounded-[24px] border border-slate-200 bg-white p-4">
-              <div class="flex items-center justify-between text-sm text-slate-600">
-                <span>Selected package</span>
-                <span>{{ selected?.title || 'Choose one' }}</span>
-              </div>
-              <div class="mt-3 flex items-center justify-between text-sm text-slate-600">
-                <span>Total</span>
-                <span class="text-theme text-2xl font-black">৳{{ total }}</span>
               </div>
             </div>
 
