@@ -1,16 +1,35 @@
 function resolveAllowedHosts() {
+  const toDomain = (value: string) => value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/:\d+$/, '').replace(/\/$/, '');
+  const toApex = (value: string) => {
+    const domain = toDomain(value);
+    const parts = domain.split('.').filter(Boolean);
+    if (parts.length < 2) return '';
+    return `${parts[parts.length - 2]}.${parts[parts.length - 1]}`;
+  };
+
   const envHosts = String(process.env.NUXT_ALLOWED_HOSTS || '')
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean);
 
+  const appDomain = process.env.APP_DOMAIN || 'tast.ffuid.shop';
+  const adminDomain = process.env.ADMIN_DOMAIN || 'admin.ffuid.shop';
+  const appApex = toApex(appDomain);
+  const adminApex = toApex(adminDomain);
+
   return Array.from(new Set([
-    process.env.APP_DOMAIN || 'tast.ffuid.shop',
-    process.env.ADMIN_DOMAIN || 'admin.ffuid.shop',
+    toDomain(appDomain),
+    toDomain(adminDomain),
+    appApex,
+    adminApex,
+    appApex ? `.${appApex}` : '',
+    adminApex ? `.${adminApex}` : '',
+    'ffuid.shop',
+    '.ffuid.shop',
     'localhost',
     '127.0.0.1',
-    ...envHosts,
-  ]));
+    ...envHosts.map((item) => toDomain(item)),
+  ].filter(Boolean)));
 }
 
 export default defineNuxtConfig({

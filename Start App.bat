@@ -43,7 +43,7 @@ if "%FORCE_PORT_CLEANUP%"=="1" (
 	echo Force cleanup enabled. Freeing ports 8000, 3000, 3001...
 	powershell -NoProfile -Command "$ports = @(8000,3000,3001); foreach ($port in $ports) { Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { if ($_){ Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue } } }"
 ) else (
-	echo Keeping existing running services (set FORCE_PORT_CLEANUP=1 for hard restart).
+	echo Keeping existing running services (set FORCE_PORT_CLEANUP=1 for hard restart^).
 )
 
 if "%BACKEND_CAN_START%"=="1" (
