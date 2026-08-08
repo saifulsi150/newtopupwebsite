@@ -32,6 +32,31 @@ function resolveAllowedHosts() {
   ].filter(Boolean)));
 }
 
+const localhostServiceWorkerResetScript = `(function(){
+  try {
+    var host = window.location.hostname;
+    var isLocal = host === 'localhost' || host === '127.0.0.1';
+    var isProdApp = host === 'ffuid.shop' || host === 'www.ffuid.shop';
+    var shouldReset = isLocal || isProdApp;
+    var resetKey = 'ffuid-sw-reset-v3';
+    if (!shouldReset || !('serviceWorker' in navigator)) return;
+    if (window.localStorage && localStorage.getItem(resetKey) === 'done') return;
+    navigator.serviceWorker.getRegistrations()
+      .then(function(registrations){
+        return Promise.all(registrations.map(function(registration){ return registration.unregister(); }));
+      })
+      .catch(function(){ return undefined; });
+    if ('caches' in window) {
+      caches.keys()
+        .then(function(keys){ return Promise.all(keys.map(function(key){ return caches.delete(key); })); })
+        .catch(function(){ return undefined; });
+    }
+    if (window.localStorage) {
+      localStorage.setItem(resetKey, 'done');
+    }
+  } catch (_) {}
+})();`;
+
 export default defineNuxtConfig({
   ssr: true,
   compatibilityDate: "2026-07-29",
@@ -47,6 +72,12 @@ export default defineNuxtConfig({
       meta: [
         { name: "mobile-web-app-capable", content: "yes" },
         { name: "apple-mobile-web-app-capable", content: "yes" }
+      ],
+      script: [
+        {
+          key: "localhost-sw-reset",
+          innerHTML: localhostServiceWorkerResetScript
+        }
       ],
       link: [
         { rel: "manifest", href: "/api/manifest.webmanifest" },

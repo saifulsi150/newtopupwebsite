@@ -98,6 +98,7 @@ const hasInstallPromptEvent = computed(() => Boolean(installPromptEvent.value));
 const forceInstallCanIntercept = computed(() =>
   pgwAppEnabled.value &&
   pgwForceInstallEnabled.value &&
+  inAppBrowserDetected.value &&
   !isStandaloneApp.value &&
   !pwaInstalledPersisted.value &&
   (hasInstallPromptEvent.value || inAppBrowserDetected.value)
@@ -105,6 +106,15 @@ const forceInstallCanIntercept = computed(() =>
 const showForceOverlay = computed(() => pgwAppEnabled.value && pgwForceInstallEnabled.value && inAppBrowserDetected.value && forceInstallArmed.value && !isStandaloneApp.value && !pwaInstalledPersisted.value);
 const showRegularInstallCard = computed(() => pgwAppEnabled.value && !pgwForceInstallEnabled.value && showInstallPrompt.value && !isStandaloneApp.value && !pwaInstalledPersisted.value);
 const showForceInstallButton = computed(() => pgwAppEnabled.value && pgwForceInstallEnabled.value && hasInstallPromptEvent.value && !isStandaloneApp.value && !pwaInstalledPersisted.value);
+
+function allowNativeInteraction(target: HTMLElement | null) {
+  if (!target) return false;
+  return Boolean(
+    target.closest(
+      'button, input, textarea, select, option, label, summary, details, [role="button"], [role="option"], [role="checkbox"], [role="radio"], [contenteditable="true"], [data-pgw-install-safe="true"]'
+    )
+  );
+}
 
 useHead(() => ({
   title: siteName.value || 'TOPUP',
@@ -213,9 +223,11 @@ async function triggerInstallPrompt() {
 
 function handlePgwForceClick(event: MouseEvent | PointerEvent) {
   if (!process.client) return;
+  // Only guard clicks inside in-app browsers. Regular browsers must stay interactive.
+  if (!inAppBrowserDetected.value) return;
   if (!forceInstallCanIntercept.value) return;
   const target = event.target as HTMLElement | null;
-  if (target && target.closest('[data-pgw-install-safe="true"]')) return;
+  if (allowNativeInteraction(target)) return;
   event.preventDefault();
   event.stopPropagation();
   forceInstallArmed.value = true;
@@ -259,6 +271,21 @@ function syncInstalledState() {
   }
 }
 
+async function cleanupDevServiceWorker() {
+  if (!process.client || !('serviceWorker' in navigator)) return;
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+  } catch {}
+
+  if ('caches' in window) {
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    } catch {}
+  }
+}
+
 onMounted(() => {
   if (!process.client) return;
 
@@ -273,7 +300,9 @@ onMounted(() => {
   if (typeof mq.addEventListener === 'function') mq.addEventListener('change', syncDevice);
   else mq.addListener(syncDevice);
 
-  if ('serviceWorker' in navigator) {
+  if (import.meta.dev) {
+    cleanupDevServiceWorker();
+  } else if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => undefined);
   }
 
@@ -299,6 +328,12 @@ onMounted(() => {
   });
 
   document.addEventListener('visibilitychange', syncStandaloneState);
+});
+
+onBeforeUnmount(() => {
+  if (!process.client) return;
+  document.removeEventListener('click', handlePgwForceClick, true);
+  document.removeEventListener('visibilitychange', syncStandaloneState);
 });
 
 watch([pgwAppEnabled, pgwForceInstallEnabled, pwaInstalledPersisted], () => {
