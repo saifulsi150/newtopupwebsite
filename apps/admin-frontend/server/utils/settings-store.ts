@@ -1,4 +1,4 @@
-import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+﻿import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 type SettingsShape = Record<string, string | number | boolean | null | Array<Record<string, unknown>>>;
@@ -47,6 +47,9 @@ const DEFAULT_SETTINGS: SettingsShape = {
   contact_telegram_url: '',
   contact_email: '',
   contact_phone: '',
+  website_api_url: 'https://ai-topup.lxtopup.com',
+  website_api_key: '',
+  automation_enabled: 0,
   auto_api_name: '',
   auto_api_url: '',
   auto_api_secret_key: '',
