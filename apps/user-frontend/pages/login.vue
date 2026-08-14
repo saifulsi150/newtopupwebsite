@@ -64,7 +64,7 @@ async function submit() {
 
       <div class="mt-8 space-y-4">
         <div v-if="requiredNotice" class="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
-          এই পেজ দেখতে আগে লগইন করতে হবে।
+          এই পেজ দেখতে আগে লগইন করত
         </div>
         <a
           v-if="googleAuthUrl"
