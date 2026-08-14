@@ -37,18 +37,15 @@ class ManageGeneralSettings extends SettingsPage
                         $updateScript = $projectRoot . '/update.sh';
                         
                         if (file_exists($updateScript)) {
-                            $output = shell_exec("bash " . escapeshellarg($updateScript) . " 2>&1");
+                            shell_exec("nohup bash " . escapeshellarg($updateScript) . " > " . escapeshellarg($projectRoot . "/update.log") . " 2>&1 &");
                         } else {
                             $repo = 'https://github.com/saifulsi150/newtopupwebsite.git';
-                            shell_exec("git -C " . escapeshellarg($projectRoot) . " fetch $repo main 2>&1");
-                            shell_exec("git -C " . escapeshellarg($projectRoot) . " reset --hard FETCH_HEAD 2>&1");
-                            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-                            \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+                            shell_exec("nohup sh -c 'git -C " . escapeshellarg($projectRoot) . " fetch $repo main && git -C " . escapeshellarg($projectRoot) . " reset --hard FETCH_HEAD && php " . escapeshellarg($projectRoot . "/services/artisan") . " migrate --force && php " . escapeshellarg($projectRoot . "/services/artisan") . " optimize:clear' > " . escapeshellarg($projectRoot . "/update.log") . " 2>&1 &");
                         }
                         
                         \Filament\Notifications\Notification::make()
-                            ->title('System Updated Successfully')
-                            ->body("✅ Latest files downloaded from GitHub.\n✅ Database updated.\n✅ Nuxt frontend rebuilt & reloaded.\n✅ Caches cleared successfully.\nThe system is now running the latest version.")
+                            ->title('Update Started')
+                            ->body('The system is updating in the background. It may take 1-2 minutes to complete.')
                             ->success()
                             ->send();
                     } catch (\Exception $e) {
