@@ -97,7 +97,7 @@ async function submit() {
       </div>
 
       <div class="mt-6 text-center text-sm text-slate-600">
-        New user TopUp <NuxtLink to="/register" class="font-semibold text-[#18823f]">Register</NuxtLink> Now
+        New user <NuxtLink to="/register" class="font-semibold text-[#18823f]">Register</NuxtLink> Now
       </div>
     </div>
   </section>
