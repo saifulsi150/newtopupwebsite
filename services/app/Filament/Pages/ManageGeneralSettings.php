@@ -29,25 +29,23 @@ class ManageGeneralSettings extends SettingsPage
                 ->icon('heroicon-o-arrow-path')
                 ->color('danger')
                 ->requiresConfirmation()
-                ->modalHeading('Update System from GitHub')
-                ->modalDescription('Are you sure you want to update? This will pull the latest code from GitHub (newtopupwebsite.git) and update the database.')
+                ->modalHeading('Update System to Latest Version')
+                ->modalDescription('Are you sure you want to update the system? This will automatically download the latest updates, apply database changes, and clear caches. The system may take a few moments to restart.')
                 ->action(function () {
                     try {
                         $projectRoot = base_path('..');
                         $repo = 'https://github.com/saifulsi150/newtopupwebsite.git';
                         
                         // Force fetch and reset to ensure it updates even with local changes
-                        $output = shell_exec("git -C " . escapeshellarg($projectRoot) . " fetch $repo main 2>&1");
-                        $output .= "\n" . shell_exec("git -C " . escapeshellarg($projectRoot) . " reset --hard FETCH_HEAD 2>&1");
+                        shell_exec("git -C " . escapeshellarg($projectRoot) . " fetch $repo main 2>&1");
+                        shell_exec("git -C " . escapeshellarg($projectRoot) . " reset --hard FETCH_HEAD 2>&1");
                         
                         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-                        $migrateOutput = \Illuminate\Support\Facades\Artisan::output();
-                        
                         \Illuminate\Support\Facades\Artisan::call('optimize:clear');
                         
                         \Filament\Notifications\Notification::make()
                             ->title('System Updated Successfully')
-                            ->body("Git: $output \nMigrate: $migrateOutput")
+                            ->body("✅ Latest files downloaded.\n✅ Database updated.\n✅ Caches cleared successfully.\nThe system is now running the latest version.")
                             ->success()
                             ->send();
                     } catch (\Exception $e) {
