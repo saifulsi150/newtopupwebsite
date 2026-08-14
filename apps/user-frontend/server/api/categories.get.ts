@@ -17,8 +17,8 @@ export default defineEventHandler(async () => {
       name: String(item.name || '').trim()
     })).filter((item) => item.id > 0 && item.name);
 
-    return { categories: categories.length ? categories : readAdminMockCategories().map((item) => ({ id: item.id, name: item.name })) };
+    return { categories };
   } catch {
-    return { categories: readAdminMockCategories().map((item) => ({ id: item.id, name: item.name })) };
+    return { categories: [] };
   }
 });

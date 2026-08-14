@@ -1,0 +1,11 @@
+CREATE DATABASE IF NOT EXISTS topup_db_tast_ffuid CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'topup_user_1091'@'localhost' IDENTIFIED BY '88bf20d8993d4b59!aA1';
+CREATE USER IF NOT EXISTS 'topup_user_1091'@'127.0.0.1' IDENTIFIED BY '88bf20d8993d4b59!aA1';
+CREATE USER IF NOT EXISTS 'ffuid'@'localhost' IDENTIFIED BY 'ffuid_pass';
+CREATE USER IF NOT EXISTS 'ffuid'@'127.0.0.1' IDENTIFIED BY 'ffuid_pass';
+GRANT ALL PRIVILEGES ON topup_db_tast_ffuid.* TO 'topup_user_1091'@'localhost';
+GRANT ALL PRIVILEGES ON topup_db_tast_ffuid.* TO 'topup_user_1091'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON topup_db_tast_ffuid.* TO 'ffuid'@'localhost';
+GRANT ALL PRIVILEGES ON topup_db_tast_ffuid.* TO 'ffuid'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY 'root' WITH GRANT OPTION;
+FLUSH PRIVILEGES;

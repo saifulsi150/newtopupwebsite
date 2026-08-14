@@ -35,18 +35,20 @@ async function submit() {
   loading.value = true;
   error.value = '';
   try {
-    const res = await $fetch('/api/login', {
+    const res = await $fetch<any>('/api/login', {
       method: 'POST',
       body: { email: email.value, password: password.value },
       timeout: 6000
     });
 
-    if (res.success) {
-      auth.login(res.user);
+    if (res && res.uid) {
+      auth.login(res);
       await navigateTo('/account');
+    } else {
+      error.value = 'Invalid response from server';
     }
   } catch (e: any) {
-    error.value = e?.data?.message || e?.data?.statusMessage || 'Login failed. Please try again.';
+    error.value = e?.data?.error || e?.data?.message || 'Login failed. Please try again.';
   } finally {
     loading.value = false;
   }

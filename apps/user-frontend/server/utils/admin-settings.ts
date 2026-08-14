@@ -17,18 +17,31 @@ function normalizeLink(input: unknown) {
   return raw;
 }
 
-export function readAdminSettingsRaw(): SettingsMap {
-  if (!existsSync(SETTINGS_PATH)) return {};
+import { useDb } from './db';
+
+export async function readAdminSettingsRaw(): Promise<SettingsMap> {
   try {
-    const parsed = JSON.parse(readFileSync(SETTINGS_PATH, 'utf8')) as SettingsMap;
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch {
+    const db = useDb();
+    const [rows] = await db.query(`SELECT name, payload FROM settings WHERE \`group\` = 'general'`);
+    const settings: SettingsMap = {};
+    for (const row of (rows as any[])) {
+      try {
+        const parsed = JSON.parse(row.payload);
+        // Spatie LaravelSettings encodes strings with quotes, e.g., '"tast"'
+        settings[row.name] = parsed;
+      } catch {
+        settings[row.name] = row.payload;
+      }
+    }
+    return settings;
+  } catch (err) {
+    console.error('Failed to read settings from DB', err);
     return {};
   }
 }
 
-export function buildHomeSettings() {
-  const s = readAdminSettingsRaw();
+export async function buildHomeSettings() {
+  const s = await readAdminSettingsRaw();
 
   const sliderItems = (Array.isArray(s.slider_items) ? s.slider_items : [])
     .map((item: any) => ({
@@ -74,10 +87,10 @@ export function buildHomeSettings() {
       closeImageUrl: '',
       enabled: Number(item?.status ?? 1) === 1
     }))
-    .filter((item: any) => item.enabled);
+  const noticeEnabled = toFlag(s.enable_notice ?? s.notice_enabled, 1) === 1;
 
   return {
-    notice: String(s.home_notice_text || '').trim(),
+    notice: noticeEnabled ? String(s.notice_content || s.home_notice_text || '').trim() : '',
     showSlider: toFlag(s.slider_enabled, 1) === 1,
     sliderItems,
     showTopSupport: toFlag(s.top_support_enabled, 1) === 1,
@@ -91,13 +104,13 @@ export function buildHomeSettings() {
   };
 }
 
-export function buildContactSettings() {
-  const s = readAdminSettingsRaw();
+export async function buildContactSettings() {
+  const s = await readAdminSettingsRaw();
   return {
     site_name: String(s.site_name || '').trim(),
-    site_icon_url: normalizePublicImageUrl(s.site_icon_url),
-    logo_primary_url: normalizePublicImageUrl(s.logo_primary_url),
-    logo_secondary_url: normalizePublicImageUrl(s.logo_secondary_url),
+    site_icon_url: normalizePublicImageUrl(s.favicon || s.site_icon_url),
+    logo_primary_url: normalizePublicImageUrl(s.logo || s.logo_primary_url),
+    logo_secondary_url: normalizePublicImageUrl(s.logo || s.logo_secondary_url),
     theme_color: String(s.theme_color || '').trim(),
     show_whatsapp: toFlag(s.contact_whatsapp_enabled, 1) === 1,
     show_telegram: toFlag(s.contact_telegram_enabled, 1) === 1,

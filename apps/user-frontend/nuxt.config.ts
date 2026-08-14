@@ -133,6 +133,8 @@ export default defineNuxtConfig({
     }
   },
   routeRules: {
+    "/api/login": { proxy: "http://127.0.0.1:8000/api/gamevault/auth/login" },
+    "/api/register": { proxy: "http://127.0.0.1:8000/api/gamevault/auth/register" },
     "/api/**": { cors: true },
     "/_nuxt/**": {
       headers: {

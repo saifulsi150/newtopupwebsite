@@ -10,7 +10,7 @@ function resolveAdminAssetBase() {
     return `https://${ADMIN_DOMAIN}`;
   }
 
-  return 'http://127.0.0.1:3001';
+  return 'http://127.0.0.1:8000';
 }
 
 const ADMIN_ASSET_BASE = resolveAdminAssetBase();
@@ -44,5 +44,11 @@ export function normalizePublicImageUrl(input: unknown): string {
 
   const safePath = raw.replace(/^\.?\//, '');
   if (raw.startsWith('/')) return `${ADMIN_ASSET_BASE}${raw}`;
+  
+  // If it's a Filament FileUpload path (doesn't start with /uploads or /storage), prepend /storage/
+  if (!safePath.startsWith('uploads/') && !safePath.startsWith('storage/')) {
+    return `${ADMIN_ASSET_BASE}/storage/${safePath}`;
+  }
+  
   return `${ADMIN_ASSET_BASE}/${safePath}`;
 }

@@ -19,6 +19,6 @@ class Categorie extends Model
     
     public function products(): HasMany
     {
-        return $this->hasMany(Veriabals::class);
+        return $this->hasMany(Product::class, 'categorie_id');
     }
 }

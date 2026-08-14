@@ -31,3 +31,30 @@ Route::get('schedule-run', function () {
 // PWA manifest and offline page
 Route::get('/manifest.json', [PWAController::class, 'manifestJson'])->name('manifest');
 Route::get('/offline.html', [PWAController::class, 'offline']);
+
+// Standard form POST handler for Filament Admin Login
+Route::post('/admin/login', function (\Illuminate\Http\Request $request) {
+    $credentials = $request->validate([
+        'email' => ['required', 'email'],
+        'password' => ['required'],
+    ]);
+
+    $remember = $request->boolean('remember');
+
+    if (\Illuminate\Support\Facades\Auth::guard('admin')->attempt($credentials, $remember)) {
+        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+        if ($admin && ! $admin->is_active) {
+            \Illuminate\Support\Facades\Auth::guard('admin')->logout();
+            return back()->withErrors(['email' => 'Your account is disabled.'])->withInput($request->only('email'));
+        }
+
+        $request->session()->regenerate();
+        return redirect()->intended('/admin');
+    }
+
+    return back()->withErrors([
+        'email' => 'These credentials do not match our records.',
+    ])->withInput($request->only('email'));
+})->middleware(['web'])->name('filament.admin.auth.login.post');
+
+

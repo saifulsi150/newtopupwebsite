@@ -118,55 +118,45 @@ export default defineEventHandler(async (event) => {
   const db = useDb();
 
   try {
-    const numericId = Number(rawSlug);
-    const slugLike = rawSlug;
-
     const [productRows] = await withTimeout(db.query(
       `SELECT
         p.id,
-        COALESCE(p.title, p.name) AS title,
+        p.title,
         p.slug,
-        COALESCE(p.image, p.image_url) AS image,
-        COALESCE(p.content, p.description, '') AS subtitle,
+        p.image,
+        COALESCE(p.content, '') AS subtitle,
         COALESCE(p.input, 'Player ID') AS input_label,
         COALESCE(p.uid_checker, 0) AS uid_checker,
-        COALESCE(p.uid_checker_api, '') AS uid_checker_api,
-        p.dynamic_fields
+        '' AS uid_checker_api,
+        '[]' AS dynamic_fields
       FROM products p
       WHERE (
         (p.slug IS NOT NULL AND p.slug = ?)
         OR (? REGEXP '^[0-9]+$' AND p.id = CAST(? AS UNSIGNED))
       )
-      AND COALESCE(p.status, p.is_active, 1) = 1
+      AND COALESCE(p.status, 1) = 1
       ORDER BY p.id DESC
       LIMIT 1`,
-      [slugLike, slugLike, slugLike]
+      [rawSlug, rawSlug, rawSlug]
     ), 1000);
 
     const dbProduct = Array.isArray(productRows) && productRows.length > 0 ? productRows[0] : null;
 
     if (!dbProduct) {
-      const mock = readMockPayload(rawSlug);
-      if (!mock) {
-        throw createError({ statusCode: 404, statusMessage: "Product not found" });
-      }
-      if (!mock.packages.length) {
-        throw createError({ statusCode: 404, statusMessage: "Package not found" });
-      }
-      return mock;
+      throw createError({ statusCode: 404, statusMessage: "Product not found" });
     }
 
     const product = normalizeProduct(dbProduct);
     const [packageRows] = await withTimeout(db.query(
       `SELECT
         pp.id,
-        COALESCE(pp.name, pp.title) AS title,
-        COALESCE(pp.sell_price, pp.price, 0) AS price,
-        COALESCE(pp.slot, 0) AS slot
+        pp.name AS title,
+        COALESCE(pp.price, 0) AS price,
+        0 AS slot
       FROM product_packages pp
       WHERE pp.product_id = ?
       AND COALESCE(pp.is_active, 1) = 1
-      ORDER BY CAST(COALESCE(pp.slot, '0') AS DECIMAL(10,2)) ASC, pp.id ASC`,
+      ORDER BY pp.id ASC`,
       [product.id]
     ), 1000);
 
@@ -175,13 +165,6 @@ export default defineEventHandler(async (event) => {
       .filter((item: PackageRow) => item.id > 0 && item.title && item.price > 0);
 
     if (!packages.length) {
-      const mock = readMockPayload(rawSlug);
-      if (mock?.packages?.length) {
-        return {
-          product,
-          packages: mock.packages
-        };
-      }
       throw createError({ statusCode: 404, statusMessage: "Package not found" });
     }
 
@@ -190,16 +173,9 @@ export default defineEventHandler(async (event) => {
       packages
     };
   } catch (error: any) {
+    console.error('Error loading topup data:', error);
     if (Number(error?.statusCode || 0) >= 400) {
       throw error;
-    }
-
-    const mock = readMockPayload(rawSlug);
-    if (mock) {
-      if (!mock.packages.length) {
-        throw createError({ statusCode: 404, statusMessage: "Package not found" });
-      }
-      return mock;
     }
 
     throw createError({ statusCode: 500, statusMessage: "Unable to load topup data" });

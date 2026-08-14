@@ -11,7 +11,7 @@ class ForceHttpScheme
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (app()->isLocal() && in_array($request->getHost(), ['127.0.0.1', 'localhost'], true)) {
+        if (app()->isLocal()) {
             URL::forceScheme('http');
             URL::forceRootUrl('http://' . $request->getHttpHost());
         }

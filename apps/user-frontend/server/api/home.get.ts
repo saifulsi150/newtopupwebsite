@@ -30,10 +30,10 @@ export default defineEventHandler(async () => {
           p.id,
           p.title,
           p.slug,
-          COALESCE(p.image, p.image_url) AS image,
+          p.image,
           p.categorie_id,
           c.title AS category_title,
-          COALESCE(MIN(CASE WHEN pp.sell_price IS NOT NULL THEN pp.sell_price ELSE pp.price END), p.price_from, 0) AS price_from
+          COALESCE(MIN(pp.price), 0) AS price_from
         FROM products p
         LEFT JOIN categories c ON c.id = p.categorie_id
         LEFT JOIN product_packages pp ON pp.product_id = p.id AND COALESCE(pp.is_active, 1) = 1
@@ -42,19 +42,20 @@ export default defineEventHandler(async () => {
         ORDER BY CAST(COALESCE(p.slot, '0') AS DECIMAL(10,2)) ASC, p.id DESC`,
        ), 700);
       rows = mainRows as any[];
-    } catch {
+    } catch (e) {
+      console.error('Home query error:', e);
       const [fallbackRows] = await withTimeout(db.query(
         `SELECT
           p.id,
           p.title,
           p.slug,
-          p.image_url AS image,
+          p.image,
           0 AS categorie_id,
           '' AS category_title,
-          COALESCE(p.price_from, 0) AS price_from
+          0 AS price_from
          FROM products p
-         WHERE COALESCE(p.is_active, 1) = 1
-         ORDER BY COALESCE(p.sort_order, 0) ASC, p.id DESC`
+         WHERE COALESCE(p.status, 1) = 1
+         ORDER BY CAST(COALESCE(p.slot, '0') AS DECIMAL(10,2)) ASC, p.id DESC`
       ), 700);
       rows = fallbackRows as any[];
     }
@@ -69,11 +70,11 @@ export default defineEventHandler(async () => {
      category_title: String(item.category_title || '')
     })).filter((item: Product) => item.id > 0 && item.slug);
 
-    const payload = { products: dbRows.length ? dbRows : readAdminMockProducts() };
+    const payload = { products: dbRows };
     return payload;
   } catch {
     return {
-      products: readAdminMockProducts()
+      products: []
     };
   }
 });

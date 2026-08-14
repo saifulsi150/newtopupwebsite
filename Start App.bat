@@ -5,7 +5,6 @@ cd /d "%~dp0"
 set "ROOT_DIR=%~dp0"
 set "BACKEND_SCRIPT=%ROOT_DIR%services\start-backend.bat"
 set "USER_SCRIPT=%ROOT_DIR%services\start-user-frontend-stable.bat"
-set "ADMIN_SCRIPT=%ROOT_DIR%services\start-admin-frontend-stable.bat"
 
 if not exist "%BACKEND_SCRIPT%" (
 	echo [ERROR] Missing file: %BACKEND_SCRIPT%
@@ -17,15 +16,10 @@ if not exist "%USER_SCRIPT%" (
 	exit /b 1
 )
 
-if not exist "%ADMIN_SCRIPT%" (
-	echo [ERROR] Missing file: %ADMIN_SCRIPT%
-	exit /b 1
-)
-
 echo =========================================
-echo Starting Full Application Stack...
+echo Starting TAST Topup Application Stack...
 echo =========================================
-echo Services: Backend + User Frontend + Admin Frontend
+echo Services: Laravel Backend (API + Filament Admin) + Nuxt User Frontend
 echo.
 
 if not defined FORCE_PORT_CLEANUP set "FORCE_PORT_CLEANUP=0"
@@ -35,44 +29,42 @@ powershell -NoProfile -Command "$v = [version]((php -r 'echo PHP_MAJOR_VERSION."
 if errorlevel 1 (
 	set "BACKEND_CAN_START=0"
 	echo [WARN] Laravel backend requires PHP 8.3+ but current CLI PHP is lower or unavailable.
-	echo [WARN] Frontends will still start. Install/select PHP 8.3 to run backend on port 8000.
+	echo [WARN] User frontend will still start. Install/select PHP 8.3 to run backend on port 8000.
 	echo.
 )
 
 if "%FORCE_PORT_CLEANUP%"=="1" (
-	echo Force cleanup enabled. Freeing ports 8000, 3000, 3001...
-	powershell -NoProfile -Command "$ports = @(8000,3000,3001); foreach ($port in $ports) { Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { if ($_){ Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue } } }"
+	echo Force cleanup enabled. Freeing ports 8000, 3000...
+	powershell -NoProfile -Command "$ports = @(8000,3000); foreach ($port in $ports) { Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { if ($_){ Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue } } }"
 ) else (
 	echo Keeping existing running services (set FORCE_PORT_CLEANUP=1 for hard restart^).
 )
 
 if "%BACKEND_CAN_START%"=="1" (
-	echo Starting Backend...
-	start "Laravel Backend" cmd /k "call ""%BACKEND_SCRIPT%"""
+	echo Starting Laravel Backend + Filament Admin...
+	start "Laravel Backend & Filament Admin" cmd /k "call ""%BACKEND_SCRIPT%"""
 ) else (
 	echo Skipping Backend start due to PHP version check.
 )
 
-echo Starting User Frontend...
-start "User Frontend" cmd /k "call ""%USER_SCRIPT%"""
-
-echo Starting Admin Frontend...
-start "Admin Frontend" cmd /k "call ""%ADMIN_SCRIPT%"""
+echo Starting Nuxt User Frontend...
+start "Nuxt User Frontend" cmd /k "call ""%USER_SCRIPT%"""
 
 echo.
-echo Waiting 8 seconds for initial boot...
-timeout /t 8 /nobreak >nul
+echo Waiting 6 seconds for services to boot...
+timeout /t 6 /nobreak >nul
 
 echo.
 echo Opening websites in browser...
 start "" http://127.0.0.1:3000
-start "" http://127.0.0.1:3001
 if "%BACKEND_CAN_START%"=="1" (
-	start "" http://127.0.0.1:8000
-) else (
-	echo Backend URL not opened because PHP 8.3+ is not available.
+	start "" http://127.0.0.1:8000/admin
 )
 
 echo.
-echo Done. You can now use the websites.
+echo =========================================
+echo Stack is LIVE:
+echo - User Frontend:  http://127.0.0.1:3000
+echo - Filament Admin: http://127.0.0.1:8000/admin
+echo =========================================
 exit /b 0

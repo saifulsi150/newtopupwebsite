@@ -15,13 +15,15 @@ async function submit() {
   }
   loading.value = true;
   try {
-    const res = await $fetch('/api/register', { method: 'POST', body: form });
-    if (res.success) {
-      auth.login(res.user);
+    const res = await $fetch<any>('/api/register', { method: 'POST', body: form });
+    if (res && res.uid) {
+      auth.login(res);
       await navigateTo('/');
+    } else {
+      error.value = 'Invalid response from server';
     }
   } catch (e: any) {
-    error.value = e?.data?.message || 'Registration failed';
+    error.value = e?.data?.error || e?.data?.message || 'Registration failed';
   } finally {
     loading.value = false;
   }

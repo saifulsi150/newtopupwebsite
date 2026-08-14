@@ -81,6 +81,15 @@ class GeneralSettings extends Settings
     public $website_api_key;
     public bool $automation_enabled = true;
 
+    // Frontend Toggles
+    public bool $slider_enabled;
+    public bool $top_support_enabled;
+    public bool $category_enabled;
+    public bool $latest_orders_enabled;
+    public bool $detect_popup_enabled;
+    public bool $home_page_popup_enabled;
+    public bool $pgw_app_enabled;
+
 
     public $version;
 
