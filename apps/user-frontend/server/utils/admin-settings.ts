@@ -43,14 +43,21 @@ export async function readAdminSettingsRaw(): Promise<SettingsMap> {
 export async function buildHomeSettings() {
   const s = await readAdminSettingsRaw();
 
-  const sliderItems = (Array.isArray(s.slider_items) ? s.slider_items : [])
-    .map((item: any) => ({
-      title: String(item?.title || '').trim(),
+  const db = useDb();
+  let dbSliders: any[] = [];
+  try {
+    const [rows] = await db.query(`SELECT * FROM sliders WHERE status = 1 ORDER BY order_column ASC`);
+    dbSliders = Array.isArray(rows) ? rows : [];
+  } catch (err) {
+    console.error('Failed to query sliders', err);
+  }
+
+  const sliderItems = dbSliders.map((item: any) => ({
+      title: '',
       image_url: normalizePublicImageUrl(item?.image_url),
-      link_url: String(item?.link_url || '').trim(),
-      enabled: Number(item?.status ?? 1) === 1
-    }))
-    .filter((item: any) => item.enabled && (item.title || item.image_url || item.link_url));
+      link_url: String(item?.url || '').trim(),
+      enabled: true
+    })).filter((item: any) => item.image_url);
 
   const topSupportButtons = [
     {
