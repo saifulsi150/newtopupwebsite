@@ -59,7 +59,7 @@ export function normalizePublicImageUrl(input: unknown): string {
   if (raw.startsWith('/')) return `${assetBase}${raw}`;
   
   if (!safePath.startsWith('uploads/') && !safePath.startsWith('storage/')) {
-    return `${assetBase}/storage/${safePath}`;
+    return `${assetBase}/uploads/${safePath}`;
   }
   
   return `${assetBase}/${safePath}`;
