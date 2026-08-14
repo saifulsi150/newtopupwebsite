@@ -91,11 +91,11 @@ export async function buildHomeSettings() {
 
   return {
     notice: noticeEnabled ? String(s.notice_content || s.home_notice_text || '').trim() : '',
-    showSlider: toFlag(s.slider_enabled, 1) === 1,
+    showSlider: true,
     sliderItems,
     showTopSupport: toFlag(s.top_support_enabled, 1) === 1,
     topSupportButtons,
-    showCategories: toFlag(s.category_enabled, 1) === 1,
+    showCategories: true,
     showLatestOrders: toFlag(s.latest_orders_enabled, 1) === 1,
     detectPopupEnabled: toFlag(s.detect_popup_enabled, 0) === 1,
     pagePopupEnabled: toFlag(s.home_page_popup_enabled, 0) === 1,

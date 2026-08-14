@@ -183,16 +183,8 @@ class ManageGeneralSettings extends SettingsPage
                         Forms\Components\Tabs\Tab::make('User Frontend')
                             ->icon('heroicon-o-window')
                             ->schema([
-                                Forms\Components\Toggle::make('slider_enabled')
-                                    ->label('Show Slider')
-                                    ->default(true),
-
                                 Forms\Components\Toggle::make('top_support_enabled')
                                     ->label('Show Top Support Buttons')
-                                    ->default(true),
-
-                                Forms\Components\Toggle::make('category_enabled')
-                                    ->label('Show Categories Section')
                                     ->default(true),
 
                                 Forms\Components\Toggle::make('latest_orders_enabled')
