@@ -1,3 +1,6 @@
+const cleanAdminDomain = (process.env.ADMIN_DOMAIN || "admin.ffuid.shop").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+const cleanAppDomain = (process.env.APP_DOMAIN || "tast.ffuid.shop").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+
 function resolveAllowedHosts() {
   const toDomain = (value: string) => value.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/:\d+$/, "").replace(/\/$/, "");
   const toApex = (value: string) => {
@@ -12,14 +15,12 @@ function resolveAllowedHosts() {
     .map((item) => item.trim())
     .filter(Boolean);
 
-  const appDomain = process.env.APP_DOMAIN || "tast.ffuid.shop";
-  const adminDomain = process.env.ADMIN_DOMAIN || "admin.ffuid.shop";
-  const appApex = toApex(appDomain);
-  const adminApex = toApex(adminDomain);
-
+  const appApex = toApex(cleanAppDomain);
+  const adminApex = toApex(cleanAdminDomain);
+ 
   return Array.from(new Set([
-    toDomain(appDomain),
-    toDomain(adminDomain),
+    cleanAppDomain,
+    cleanAdminDomain,
     appApex,
     adminApex,
     appApex ? `.${appApex}` : "",
@@ -81,8 +82,8 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: "manifest", href: "/api/manifest.webmanifest" },
-        { rel: "preconnect", href: `https://${process.env.ADMIN_DOMAIN || "admin.ffuid.shop"}` },
-        { rel: "dns-prefetch", href: `//${process.env.ADMIN_DOMAIN || "admin.ffuid.shop"}` },
+        { rel: "preconnect", href: `https://${cleanAdminDomain}` },
+        { rel: "dns-prefetch", href: `//${cleanAdminDomain}` },
         { rel: "preconnect", href: "https://wa.me" },
         { rel: "dns-prefetch", href: "//wa.me" }
       ]
@@ -105,9 +106,7 @@ export default defineNuxtConfig({
       supportUrl: process.env.NUXT_PUBLIC_SUPPORT_URL || "https://t.me/admimapp",
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || "",
       googleRedirectUri: process.env.NUXT_PUBLIC_GOOGLE_REDIRECT_URI || "/api/auth/google/callback",
-      adminAssetBase: process.env.NUXT_PUBLIC_ADMIN_ASSET_BASE || (process.env.NODE_ENV === 'production'
-        ? `https://${process.env.ADMIN_DOMAIN || "admin.ffuid.shop"}`
-        : 'http://127.0.0.1:3001')
+      adminAssetBase: process.env.NUXT_PUBLIC_ADMIN_ASSET_BASE || `https://${cleanAdminDomain}`
     }
   },
   nitro: {
@@ -133,8 +132,8 @@ export default defineNuxtConfig({
     }
   },
   routeRules: {
-    "/api/login": { proxy: "http://127.0.0.1:8000/api/gamevault/auth/login" },
-    "/api/register": { proxy: "http://127.0.0.1:8000/api/gamevault/auth/register" },
+    "/api/login": { proxy: `https://${cleanAdminDomain}/api/gamevault/auth/login` },
+    "/api/register": { proxy: `https://${cleanAdminDomain}/api/gamevault/auth/register` },
     "/api/**": { cors: true },
     "/_nuxt/**": {
       headers: {

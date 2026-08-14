@@ -39,16 +39,28 @@ export function normalizePublicImageUrl(input: unknown): string {
     return '';
   }
 
-  if (/^https?:\/\//i.test(raw)) return rewriteLegacyAdminUploadUrl(raw);
+  const config = useRuntimeConfig();
+  let assetBase = String(config.public.adminAssetBase || '').trim().replace(/\/+$/, '');
+  if (!assetBase) {
+    assetBase = 'https://admin.vottopup.com';
+  }
+
+  // Helper to rewrite legacy/fallback URLs
+  const rewriteUrls = (url: string) => {
+    return url.replace(/https?:\/\/(admin\.ffuid\.shop|admin\.vottopup\.com|127\.0.0.1:8000)/gi, assetBase);
+  };
+
+  if (/^https?:\/\//i.test(raw)) {
+    return rewriteUrls(raw);
+  }
   if (raw.startsWith('//')) return `https:${raw}`;
 
   const safePath = raw.replace(/^\.?\//, '');
-  if (raw.startsWith('/')) return `${ADMIN_ASSET_BASE}${raw}`;
+  if (raw.startsWith('/')) return `${assetBase}${raw}`;
   
-  // If it's a Filament FileUpload path (doesn't start with /uploads or /storage), prepend /storage/
   if (!safePath.startsWith('uploads/') && !safePath.startsWith('storage/')) {
-    return `${ADMIN_ASSET_BASE}/storage/${safePath}`;
+    return `${assetBase}/storage/${safePath}`;
   }
   
-  return `${ADMIN_ASSET_BASE}/${safePath}`;
+  return `${assetBase}/${safePath}`;
 }
