@@ -34,18 +34,21 @@ class ManageGeneralSettings extends SettingsPage
                 ->action(function () {
                     try {
                         $projectRoot = base_path('..');
-                        $repo = 'https://github.com/saifulsi150/newtopupwebsite.git';
+                        $updateScript = $projectRoot . '/update.sh';
                         
-                        // Force fetch and reset to ensure it updates even with local changes
-                        shell_exec("git -C " . escapeshellarg($projectRoot) . " fetch $repo main 2>&1");
-                        shell_exec("git -C " . escapeshellarg($projectRoot) . " reset --hard FETCH_HEAD 2>&1");
-                        
-                        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-                        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+                        if (file_exists($updateScript)) {
+                            $output = shell_exec("bash " . escapeshellarg($updateScript) . " 2>&1");
+                        } else {
+                            $repo = 'https://github.com/saifulsi150/newtopupwebsite.git';
+                            shell_exec("git -C " . escapeshellarg($projectRoot) . " fetch $repo main 2>&1");
+                            shell_exec("git -C " . escapeshellarg($projectRoot) . " reset --hard FETCH_HEAD 2>&1");
+                            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+                            \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+                        }
                         
                         \Filament\Notifications\Notification::make()
                             ->title('System Updated Successfully')
-                            ->body("✅ Latest files downloaded.\n✅ Database updated.\n✅ Caches cleared successfully.\nThe system is now running the latest version.")
+                            ->body("✅ Latest files downloaded from GitHub.\n✅ Database updated.\n✅ Nuxt frontend rebuilt & reloaded.\n✅ Caches cleared successfully.\nThe system is now running the latest version.")
                             ->success()
                             ->send();
                     } catch (\Exception $e) {
