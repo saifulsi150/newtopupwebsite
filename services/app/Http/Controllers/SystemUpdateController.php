@@ -22,7 +22,7 @@ class SystemUpdateController extends Controller
 
         try {
             // Step 1: Pull latest code from GitHub
-            $projectRoot = base_path('../..');
+            $projectRoot = base_path('..');
             $gitOutput = shell_exec("git -C " . escapeshellarg($projectRoot) . " pull origin main 2>&1");
             $logs[] = 'Git: ' . trim((string) $gitOutput);
             Log::info('[SystemUpdate] Git pull: ' . $gitOutput);

@@ -33,11 +33,12 @@ class ManageGeneralSettings extends SettingsPage
                 ->modalDescription('Are you sure you want to update? This will pull the latest code from GitHub (newtopupwebsite.git) and update the database.')
                 ->action(function () {
                     try {
-                        $projectRoot = base_path('../..');
+                        $projectRoot = base_path('..');
                         $repo = 'https://github.com/saifulsi150/newtopupwebsite.git';
                         
-                        // force pull
-                        $output = shell_exec("git -C " . escapeshellarg($projectRoot) . " pull $repo main 2>&1");
+                        // Force fetch and reset to ensure it updates even with local changes
+                        $output = shell_exec("git -C " . escapeshellarg($projectRoot) . " fetch $repo main 2>&1");
+                        $output .= "\n" . shell_exec("git -C " . escapeshellarg($projectRoot) . " reset --hard FETCH_HEAD 2>&1");
                         
                         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
                         $migrateOutput = \Illuminate\Support\Facades\Artisan::output();
