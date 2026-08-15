@@ -79,7 +79,7 @@ async function submit() {
         </div>
         <div class="flex items-center gap-3 text-sm text-slate-500">
           <span class="h-px flex-1 bg-slate-300" />
-          <span>Or sign in with credentials</span>
+          <span>Or sign credentials</span>
           <span class="h-px flex-1 bg-slate-300" />
         </div>
         <label class="block text-sm font-semibold text-slate-700">
