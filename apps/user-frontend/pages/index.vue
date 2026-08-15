@@ -36,6 +36,13 @@ const noticeText = computed(() => {
 
 const noticeDismissed = ref(false);
 
+// Track pressed/clicked product so it stays pushed inward and never pops back out
+const pressedProductId = ref<number | null>(null);
+
+function handleProductClick(id: number) {
+  pressedProductId.value = id;
+}
+
 // Group products dynamically by Category title from database/admin
 const categoryGroups = computed(() => {
   const allProducts = products.value;
@@ -66,7 +73,7 @@ function handleProductImageError(event: Event) {
 
 <template>
   <div class="home-page">
-    <!-- Notice Box (Exact as screenshot: sharp corners, solid dark green, Notice: on line 1, text on line 2, close (X) circle on right) -->
+    <!-- Notice Box -->
     <div v-if="!noticeDismissed && noticeText" class="notice-box">
       <button class="notice-close" type="button" aria-label="Close Notice" @click="noticeDismissed = true">
         <svg viewBox="0 0 24 24" class="close-icon"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/></svg>
@@ -75,7 +82,7 @@ function handleProductImageError(event: Event) {
       <div class="notice-text">{{ noticeText }}</div>
     </div>
 
-    <!-- Main Banner Slider (Exact as screenshot: full image visibility, sharp corners, no crop, no sliding movement) -->
+    <!-- Main Banner Slider -->
     <div v-if="homeSettings.showSlider !== false && sliderItems.length" class="slider-wrapper">
       <div class="slider-container">
         <a
@@ -113,8 +120,10 @@ function handleProductImageError(event: Event) {
             :key="item.id"
             :to="`/topup/${item.slug}`"
             class="product-card"
+            :class="{ 'is-clicked': pressedProductId === item.id }"
+            @click="handleProductClick(item.id)"
           >
-            <div class="product-img-wrap">
+            <div class="product-img-wrap" :class="{ 'is-inward': pressedProductId === item.id }">
               <img :src="item.image_url" :alt="item.title" loading="lazy" decoding="async" @error="handleProductImageError" />
             </div>
             <p class="product-title">{{ item.title }}</p>
@@ -128,7 +137,7 @@ function handleProductImageError(event: Event) {
 <style scoped>
 .home-page {
   padding-top: 10px;
-  max-width: 1260px;
+  max-width: 1240px;
   margin: 0 auto;
   padding-bottom: 30px;
 }
@@ -179,7 +188,7 @@ function handleProductImageError(event: Event) {
   height: 20px;
 }
 
-/* ===== SLIDER (NO ROUNDED CORNERS, FULL IMAGE VISIBLE, NO SLIDING ANIMATION) ===== */
+/* ===== SLIDER ===== */
 .slider-wrapper {
   margin: 0 12px 14px;
 }
@@ -214,6 +223,7 @@ function handleProductImageError(event: Event) {
 .category-block {
   margin-top: 24px;
   margin-bottom: 20px;
+  padding: 0 12px;
 }
 
 .category-title {
@@ -225,24 +235,19 @@ function handleProductImageError(event: Event) {
   letter-spacing: -0.2px;
 }
 
+/* Product Grid matching Screenshot proportions */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  padding: 0 12px;
+  gap: 10px;
 }
 
+/* On Desktop: matching PC screenshot size (clean compact cards) */
 @media (min-width: 640px) {
   .product-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(115px, 130px));
     gap: 16px;
-  }
-}
-
-@media (min-width: 900px) {
-  .product-grid {
-    grid-template-columns: repeat(6, 1fr);
-    gap: 18px;
+    justify-content: start;
   }
 }
 
@@ -253,21 +258,25 @@ function handleProductImageError(event: Event) {
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
   outline: none;
+  cursor: pointer;
 }
 
 .product-img-wrap {
   width: 100%;
+  max-width: 130px;
   aspect-ratio: 1/1;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
   background: #000000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: transform 0.1s ease-out;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  /* Solid firm press with zero bouncy spring */
+  transition: transform 0.05s linear;
 }
 
-/* Inward Press Animation */
-.product-card:active .product-img-wrap {
-  transform: scale(0.92);
+/* Firm Inward Press on Click: stays inward once clicked */
+.product-card:active .product-img-wrap,
+.product-img-wrap.is-inward {
+  transform: scale(0.91);
 }
 
 .product-img-wrap img {
@@ -279,12 +288,13 @@ function handleProductImageError(event: Event) {
 
 .product-title {
   color: #17395c;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   text-align: center;
   margin-top: 6px;
   line-height: 1.25;
   word-break: break-word;
+  max-width: 130px;
 }
 
 .status-msg {
