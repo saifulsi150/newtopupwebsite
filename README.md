@@ -44,16 +44,16 @@ Use this document as a full setup/install guide for local development, VPS deplo
 
 ### If repository is public
 ```bash
-git clone https://github.com/saifulsi150/tast.topup.git
-cd tast.topup
+git clone https://github.com/saifulsi150/newtopupwebsite.git
+cd newtopupwebsite
 ```
 
 ### If repository is private (recommended setup)
 Use SSH deploy key on server/machine, then clone via SSH:
 
 ```bash
-git clone git@github.com:saifulsi150/tast.topup.git
-cd tast.topup
+git clone git@github.com:saifulsi150/newtopupwebsite.git
+cd newtopupwebsite
 ```
 
 If using HTTPS for private repository, configure Git credentials (PAT) on that machine first.

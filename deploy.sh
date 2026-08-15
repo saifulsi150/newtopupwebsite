@@ -32,7 +32,7 @@ load_env() {
     . "$DEPLOY_ENV_FILE"
     set +a
 
-    : "${APP_NAME:=tast.topup}"
+    : "${APP_NAME:=newtopupwebsite}"
     : "${APP_ENV:=production}"
     : "${APP_DEBUG:=false}"
     : "${APP_URL:=http://127.0.0.1:8000}"
@@ -48,7 +48,7 @@ load_env() {
     : "${APP_DOMAIN:=127.0.0.1}"
     : "${ADMIN_DOMAIN:=127.0.0.1}"
     : "${NUXT_APP_BASE_URL:=/}"
-    : "${NUXT_PUBLIC_SITE_NAME:=tast.topup}"
+    : "${NUXT_PUBLIC_SITE_NAME:=newtopupwebsite}"
     : "${NUXT_PUBLIC_SUPPORT_URL:=https://t.me/admimapp}"
     : "${ADMIN_SECRET:=change_this_secret_123}"
     : "${DEPLOY_AGENT_URL:=http://deploy-agent:8099}"
