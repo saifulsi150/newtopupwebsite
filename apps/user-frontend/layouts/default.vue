@@ -58,14 +58,41 @@ const secondaryLogoUrl = computed(() =>
 );
 const headerLogoUrl = computed(() => primaryLogoUrl.value || secondaryLogoUrl.value || siteIconUrl.value);
 const appIconUrl = computed(() => headerLogoUrl.value || siteIconUrl.value);
+
+// Dynamic Colors
 const themeColor = computed(() => {
   const raw = String(supportSettings.value?.theme_color || '').trim();
-  return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw.toLowerCase() : '#0d682f';
+  return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#0d682f';
 });
+const bgColor = computed(() => {
+  const raw = String(supportSettings.value?.background_color || '').trim();
+  return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#f1f6fc';
+});
+const headerBgColor = computed(() => {
+  const raw = String(supportSettings.value?.navigation_background_color || '').trim();
+  return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#ffffff';
+});
+const footerBgColor = computed(() => {
+  const raw = String(supportSettings.value?.footer_color || '').trim();
+  return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#030d36';
+});
+const footerTextColor = computed(() => {
+  const raw = String(supportSettings.value?.footer_font_color || '').trim();
+  return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#ffffff';
+});
+
+const themeStyles = computed(() => ({
+  '--theme-color': themeColor.value,
+  '--body-bg': bgColor.value,
+  '--header-bg': headerBgColor.value,
+  '--footer-bg': footerBgColor.value,
+  '--footer-text': footerTextColor.value,
+  backgroundColor: bgColor.value
+}));
+
 const showSupportWhatsapp = computed(() => Boolean(supportSettings.value?.show_whatsapp) && Boolean(globalWhatsappUrl.value));
 const showSupportGroup = computed(() => Boolean(supportSettings.value?.show_telegram) && Boolean(globalGroupUrl.value));
 const hasSupportCards = computed(() => showSupportWhatsapp.value || showSupportGroup.value);
-const themeStyles = computed(() => ({ '--theme-color': themeColor.value }));
 const stayConnectedMessage = computed(() => String(supportSettings.value?.stay_connected_message || '').trim());
 const socialFacebookUrl = computed(() => String(supportSettings.value?.social_facebook_url || '').trim());
 const socialInstagramUrl = computed(() => String(supportSettings.value?.social_instagram_url || '').trim());
@@ -107,9 +134,9 @@ async function logout() {
 </script>
 
 <template>
-  <div class="themed-root relative flex min-h-screen flex-col justify-between bg-[#f1f6fc] text-slate-900" :style="themeStyles">
-    <!-- HEADER (matching rgbazer.com) -->
-    <header class="fixed inset-x-0 top-0 z-50 h-[62px] border-b border-slate-100 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.03)] md:h-[68px]">
+  <div class="themed-root relative flex min-h-screen flex-col justify-between text-slate-900" :style="themeStyles">
+    <!-- HEADER -->
+    <header class="fixed inset-x-0 top-0 z-50 h-[62px] border-b border-slate-100 shadow-[0_1px_4px_rgba(0,0,0,0.03)] md:h-[68px]" :style="{ backgroundColor: headerBgColor }">
       <div class="mx-auto flex h-full max-w-6xl items-center justify-between px-3.5 lg:px-8">
         <!-- Logo -->
         <NuxtLink to="/" class="flex items-center gap-2" @click="closeMenu">
@@ -133,7 +160,7 @@ async function logout() {
 
           <!-- If Logged In -->
           <template v-if="showProtectedUi">
-            <NuxtLink to="/account" class="inline-flex items-center gap-1.5 rounded-full bg-[#0a6b2a] px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition">
+            <NuxtLink to="/account" class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition" :style="{ backgroundColor: themeColor }">
               <span>💳</span>
               <span>{{ walletBalance }}৳</span>
             </NuxtLink>
@@ -145,7 +172,7 @@ async function logout() {
 
           <!-- If Guest -->
           <template v-else>
-            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-md bg-[#0d682f] px-4 py-1.5 text-[13.5px] font-bold text-white transition hover:opacity-90 shadow-sm">
+            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-md px-4 py-1.5 text-[13.5px] font-bold text-white transition hover:opacity-90 shadow-sm" :style="{ backgroundColor: themeColor }">
               Login
             </NuxtLink>
           </template>
@@ -154,7 +181,7 @@ async function logout() {
         <!-- Right Nav: Mobile -->
         <div class="flex md:hidden items-center gap-2">
           <template v-if="showProtectedUi">
-            <NuxtLink to="/account" class="inline-flex items-center gap-1.5 rounded-full bg-[#0a6b2a] px-3 py-1.5 text-xs font-bold text-white shadow-sm">
+            <NuxtLink to="/account" class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold text-white shadow-sm" :style="{ backgroundColor: themeColor }">
               <span>💳</span>
               <span>{{ walletBalance }}৳</span>
             </NuxtLink>
@@ -165,7 +192,7 @@ async function logout() {
           </template>
 
           <template v-else>
-            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-md bg-[#0d682f] px-3.5 py-1 text-[13px] font-bold text-white shadow-sm">
+            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-md px-3.5 py-1 text-[13px] font-bold text-white shadow-sm" :style="{ backgroundColor: themeColor }">
               Login
             </NuxtLink>
           </template>
@@ -180,7 +207,7 @@ async function logout() {
           <div class="text-xs text-slate-500">{{ (auth.user?.value || auth.user)?.email || '' }}</div>
         </div>
         <div class="space-y-1 text-sm font-medium">
-          <NuxtLink to="/add-money" class="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 font-bold text-[#0a6b2a] transition hover:bg-emerald-100" @click="closeMenu">
+          <NuxtLink to="/add-money" class="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 font-bold text-[#0d682f] transition hover:bg-emerald-100" @click="closeMenu">
             <svg viewBox="0 0 24 24" class="h-4 w-4 fill-current"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
             <span>Add Money</span>
           </NuxtLink>
@@ -200,14 +227,14 @@ async function logout() {
     </main>
 
     <!-- FOOTER -->
-    <footer class="bg-[#030d36] pb-20 pt-8 text-white md:pb-8">
+    <footer class="pb-20 pt-8 md:pb-8" :style="{ backgroundColor: footerBgColor, color: footerTextColor }">
       <div class="mx-auto max-w-6xl px-5 lg:px-8">
         <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
           
           <!-- Column 1: STAY CONNECTED -->
           <div v-if="stayConnectedMessage || hasSocialLinks">
-            <h4 class="text-sm font-black tracking-wider text-white uppercase">STAY CONNECTED</h4>
-            <p v-if="stayConnectedMessage" class="mt-2 text-xs leading-relaxed text-slate-300">
+            <h4 class="text-sm font-black tracking-wider uppercase" :style="{ color: footerTextColor }">STAY CONNECTED</h4>
+            <p v-if="stayConnectedMessage" class="mt-2 text-xs leading-relaxed opacity-80">
               {{ stayConnectedMessage }}
             </p>
             <div v-if="hasSocialLinks" class="mt-3 flex items-center gap-2.5">
@@ -228,7 +255,7 @@ async function logout() {
 
           <!-- Column 2: SUPPORT CENTER -->
           <div v-if="hasSupportCards">
-            <h4 class="text-sm font-black tracking-wider text-white uppercase">SUPPORT CENTER</h4>
+            <h4 class="text-sm font-black tracking-wider uppercase" :style="{ color: footerTextColor }">SUPPORT CENTER</h4>
             <div class="mt-3 space-y-2.5">
               <a v-if="showSupportWhatsapp" :href="globalWhatsappUrl" target="_blank" rel="noopener" class="flex items-center gap-3 rounded-lg border border-white/15 bg-white/5 p-2.5 text-white transition hover:bg-white/10">
                 <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/40">
@@ -255,17 +282,17 @@ async function logout() {
         </div>
 
         <!-- Copyright -->
-        <div class="mt-8 border-t border-white/10 pt-6 text-center text-[11.5px] text-slate-400">
-          © {{ siteName || 'RG BAZZER' }} 2026 | All Rights Reserved | Developed by <span class="font-bold text-white"></span>
+        <div class="mt-8 border-t border-white/10 pt-6 text-center text-[11.5px] opacity-70">
+          © {{ siteName || 'RG BAZZER' }} 2026 | All Rights Reserved | Developed by <span class="font-bold">Team Mahal</span>
         </div>
       </div>
     </footer>
 
-    <!-- BOTTOM MOBILE NAVIGATION (matching rgbazer.com: Home, Tutorial, TopUp, Contact Us) -->
+    <!-- BOTTOM MOBILE NAVIGATION (matching rgbazer.com) -->
     <nav class="fixed inset-x-0 bottom-0 z-40 h-[58px] border-t border-slate-200 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.03)] md:hidden">
-      <!-- If Logged In: 5 Items with Center Floating Add Money -->
+      <!-- If Logged In: 5 Items -->
       <div v-if="showProtectedUi" class="relative mx-auto grid h-full max-w-lg grid-cols-5 items-center text-center text-[10px] font-semibold">
-        <NuxtLink to="/" class="flex flex-col items-center gap-0.5 text-[#0d682f]">
+        <NuxtLink to="/" class="flex flex-col items-center gap-0.5" :style="{ color: themeColor }">
           <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z"/>
           </svg>
@@ -279,9 +306,9 @@ async function logout() {
           <span>My Orders</span>
         </NuxtLink>
 
-        <!-- Elevated Green Add Money Button -->
+        <!-- Elevated Add Money Button -->
         <NuxtLink to="/add-money" class="flex flex-col items-center justify-end text-slate-600">
-          <div class="absolute -top-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#0a6b2a] text-white shadow-md border-[3px] border-white">
+          <div class="absolute -top-4 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-md border-[3px] border-white" :style="{ backgroundColor: themeColor }">
             <svg viewBox="0 0 24 24" class="h-6 w-6 fill-white">
               <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
             </svg>
@@ -304,9 +331,9 @@ async function logout() {
         </NuxtLink>
       </div>
 
-      <!-- If Guest: 4 Items matching rgbazer.com (Home, Tutorial, TopUp, Contact Us) -->
+      <!-- If Guest: 4 Items -->
       <div v-else class="mx-auto grid h-full max-w-lg grid-cols-4 items-center text-center text-[10px] font-semibold">
-        <NuxtLink to="/" class="flex flex-col items-center gap-0.5 text-[#0d682f]">
+        <NuxtLink to="/" class="flex flex-col items-center gap-0.5" :style="{ color: themeColor }">
           <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z"/>
           </svg>
@@ -341,5 +368,6 @@ async function logout() {
 <style scoped>
 .themed-root {
   --theme-color: #0d682f;
+  --body-bg: #f1f6fc;
 }
 </style>

@@ -98,6 +98,10 @@ export async function buildHomeSettings() {
 
   return {
     notice: noticeEnabled ? String(s.notice_content || s.home_notice_text || '').trim() : '',
+    notice_bg_color: String(s.notice_background_color || '').trim(),
+    notice_text_color: String(s.notice_font_color || '').trim(),
+    theme_color: String(s.theme_color || '').trim(),
+    background_color: String(s.background_color || '').trim(),
     showSlider: true,
     sliderItems,
     showTopSupport: toFlag(s.top_support_enabled, 1) === 1,
@@ -119,6 +123,12 @@ export async function buildContactSettings() {
     logo_primary_url: normalizePublicImageUrl(s.logo || s.logo_primary_url),
     logo_secondary_url: normalizePublicImageUrl(s.logo || s.logo_secondary_url),
     theme_color: String(s.theme_color || '').trim(),
+    background_color: String(s.background_color || '').trim(),
+    navigation_background_color: String(s.navigation_background_color || '').trim(),
+    notice_background_color: String(s.notice_background_color || '').trim(),
+    notice_font_color: String(s.notice_font_color || '').trim(),
+    footer_color: String(s.footer_color || '').trim(),
+    footer_font_color: String(s.footer_font_color || '').trim(),
     show_whatsapp: toFlag(s.contact_whatsapp_enabled, 1) === 1,
     show_telegram: toFlag(s.contact_telegram_enabled, 1) === 1,
     support_center_whatsapp_url: String(s.global_whatsapp_url || s.contact_whatsapp_url || '').trim(),

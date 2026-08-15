@@ -158,6 +158,38 @@ class ManageGeneralSettings extends SettingsPage
                                     ->columnSpanFull(),
                             ]),
 
+                        Forms\Components\Tabs\Tab::make('Theme & Colors')
+                            ->icon('heroicon-o-paint-brush')
+                            ->schema([
+                                Forms\Components\ColorPicker::make('theme_color')
+                                    ->label('Primary / Theme Color')
+                                    ->default('#0d682f'),
+
+                                Forms\Components\ColorPicker::make('background_color')
+                                    ->label('Website Background Color')
+                                    ->default('#f1f6fc'),
+
+                                Forms\Components\ColorPicker::make('navigation_background_color')
+                                    ->label('Header / Navbar Background Color')
+                                    ->default('#ffffff'),
+
+                                Forms\Components\ColorPicker::make('notice_background_color')
+                                    ->label('Notice Banner Background Color')
+                                    ->default('#0d682f'),
+
+                                Forms\Components\ColorPicker::make('notice_font_color')
+                                    ->label('Notice Text Color')
+                                    ->default('#ffffff'),
+
+                                Forms\Components\ColorPicker::make('footer_color')
+                                    ->label('Footer & Support Background Color')
+                                    ->default('#030d36'),
+
+                                Forms\Components\ColorPicker::make('footer_font_color')
+                                    ->label('Footer Text Color')
+                                    ->default('#ffffff'),
+                            ])->columns(2),
+
                         Forms\Components\Tabs\Tab::make('Topup & Automation')
                             ->icon('heroicon-o-bolt')
                             ->schema([

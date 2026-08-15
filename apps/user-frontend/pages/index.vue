@@ -34,6 +34,16 @@ const noticeText = computed(() => {
   return String(homeSettings.value?.notice || '').trim();
 });
 
+const noticeBgColor = computed(() => {
+  const raw = String(homeSettings.value?.notice_bg_color || '').trim();
+  return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#0d682f';
+});
+
+const noticeTextColor = computed(() => {
+  const raw = String(homeSettings.value?.notice_text_color || '').trim();
+  return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#ffffff';
+});
+
 const noticeDismissed = ref(false);
 
 // Firm click lock state
@@ -73,13 +83,17 @@ function handleProductImageError(event: Event) {
 
 <template>
   <div class="home-page">
-    <!-- Notice Box matching rgbazer.com -->
-    <div v-if="!noticeDismissed && noticeText" class="notice-box">
+    <!-- Notice Box with Dynamic Colors -->
+    <div
+      v-if="!noticeDismissed && noticeText"
+      class="notice-box"
+      :style="{ backgroundColor: noticeBgColor, color: noticeTextColor }"
+    >
       <button class="notice-close" type="button" aria-label="Close Notice" @click="noticeDismissed = true">
         <svg viewBox="0 0 24 24" class="close-icon"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.2" fill="none"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2.2"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2.2"/></svg>
       </button>
-      <div class="notice-title">Notice:</div>
-      <div class="notice-text">{{ noticeText }}</div>
+      <div class="notice-title" :style="{ color: noticeTextColor }">Notice:</div>
+      <div class="notice-text" :style="{ color: noticeTextColor }">{{ noticeText }}</div>
     </div>
 
     <!-- Main Banner Slider -->
