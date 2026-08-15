@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 
 type Product = {
   id: number;
@@ -47,6 +47,31 @@ const pwaInstalledStorageKey = 'rgbazer-pwa-installed-v1';
 const homePopupVisible = ref(false);
 const homePopupActive = ref<any | null>(null);
 const detectGateVisible = ref(false);
+
+// Slider state
+const currentSlide = ref(0);
+let sliderTimer: ReturnType<typeof setInterval> | null = null;
+
+function nextSlide() {
+  if (sliderItems.value.length <= 1) return;
+  currentSlide.value = (currentSlide.value + 1) % sliderItems.value.length;
+}
+function prevSlide() {
+  if (sliderItems.value.length <= 1) return;
+  currentSlide.value = (currentSlide.value - 1 + sliderItems.value.length) % sliderItems.value.length;
+}
+function goToSlide(index: number) {
+  currentSlide.value = index;
+}
+function startSliderTimer() {
+  if (sliderTimer) clearInterval(sliderTimer);
+  sliderTimer = setInterval(() => {
+    nextSlide();
+  }, 4000);
+}
+function stopSliderTimer() {
+  if (sliderTimer) clearInterval(sliderTimer);
+}
 
 const pagePopupEnabled = computed(() => Boolean(homeSettings.value?.pagePopupEnabled));
 const pagePopupLimitPerDay = computed(() => Math.max(1, Number(homeSettings.value?.pagePopupLimitPerDay || 5)));
@@ -220,54 +245,73 @@ watch(homeSettingsData, () => {
   syncDetectGate();
 }, { immediate: true, deep: true });
 
+watch(sliderItems, (items) => {
+  currentSlide.value = 0;
+  if (items.length > 1) startSliderTimer();
+}, { immediate: true });
+
 onMounted(() => {
   syncHomePopup();
   syncDetectGate();
+  if (sliderItems.value.length > 1) startSliderTimer();
+});
+
+onBeforeUnmount(() => {
+  stopSliderTimer();
 });
 </script>
 
 <template>
   <div class="home-page">
     <!-- Notice Banner -->
-    <div v-if="!noticeDismissed && noticeText" class="notice-box">
-      <button class="notice-close" type="button" @click="dismissNotice">&times;</button>
-      <div class="notice-title">Notice:</div>
-      {{ noticeText }}
-    </div>
+    <transition name="notice-slide">
+      <div v-if="!noticeDismissed && noticeText" class="notice-box">
+        <div class="notice-icon">📢</div>
+        <div class="notice-content">
+          <span class="notice-title">Notice:</span>
+          {{ noticeText }}
+        </div>
+        <button class="notice-close" type="button" aria-label="Close notice" @click="dismissNotice">×</button>
+      </div>
+    </transition>
 
-    <div v-if="homePopupVisible && homePopupActive" class="home-popup-overlay" role="dialog" aria-modal="true" aria-label="Homepage notice">
-      <div class="home-popup-card" @click="handlePopupCardClick">
-        <button type="button" class="home-popup-close-top" @click.stop="dismissHomePopup">
-          <span>×</span>
-        </button>
+    <!-- Popup Modal -->
+    <transition name="popup-fade">
+      <div v-if="homePopupVisible && homePopupActive" class="home-popup-overlay" role="dialog" aria-modal="true" aria-label="Homepage notice">
+        <div class="home-popup-card" @click="handlePopupCardClick">
+          <button type="button" class="home-popup-close-top" @click.stop="dismissHomePopup">
+            <span>×</span>
+          </button>
 
-        <div class="home-popup-image-wrap">
-          <img v-if="homePopupActive.imageUrl" :src="homePopupActive.imageUrl" :alt="homePopupActive.title || 'Homepage promotion'" class="home-popup-image">
-          <div v-else class="home-popup-image-placeholder">
-            <strong>{{ homePopupActive.title || 'Promotion' }}</strong>
+          <div class="home-popup-image-wrap">
+            <img v-if="homePopupActive.imageUrl" :src="homePopupActive.imageUrl" :alt="homePopupActive.title || 'Homepage promotion'" class="home-popup-image">
+            <div v-else class="home-popup-image-placeholder">
+              <strong>{{ homePopupActive.title || 'Promotion' }}</strong>
+            </div>
+          </div>
+
+          <div class="home-popup-body">
+            <h4 v-if="homePopupActive.title" class="home-popup-title">{{ homePopupActive.title }}</h4>
+            <p v-if="homePopupActive.note" class="home-popup-note">{{ homePopupActive.note }}</p>
+            <a
+              v-if="homePopupActive.buttonUrl"
+              :href="homePopupActive.buttonUrl"
+              target="_blank"
+              rel="noopener"
+              class="home-popup-cta"
+              @click.prevent.stop="detectPopupEnabled ? handlePopupCardClick() : handleHomePopupAction()"
+            >
+              {{ homePopupActive.buttonLabel || 'Click Here' }}
+            </a>
+            <button type="button" class="home-popup-cancel" @click.stop="dismissHomePopup">
+              <span>× CLOSE</span>
+            </button>
           </div>
         </div>
-
-        <div class="home-popup-body">
-          <h4 v-if="homePopupActive.title" class="home-popup-title">{{ homePopupActive.title }}</h4>
-          <p v-if="homePopupActive.note" class="home-popup-note">{{ homePopupActive.note }}</p>
-          <a
-            v-if="homePopupActive.buttonUrl"
-            :href="homePopupActive.buttonUrl"
-            target="_blank"
-            rel="noopener"
-            class="home-popup-cta"
-            @click.prevent.stop="detectPopupEnabled ? handlePopupCardClick() : handleHomePopupAction()"
-          >
-            {{ homePopupActive.buttonLabel || 'Click Here' }}
-          </a>
-          <button type="button" class="home-popup-cancel" @click.stop="dismissHomePopup">
-            <span>× CLOSE</span>
-          </button>
-        </div>
       </div>
-    </div>
+    </transition>
 
+    <!-- In-App Browser Gate -->
     <div v-if="detectGateVisible" class="detect-popup-overlay" role="dialog" aria-modal="true" aria-label="Open in Chrome" data-pgw-install-safe="true" @click="openCurrentPageInChrome">
       <div class="detect-popup-card" data-pgw-install-safe="true" @click.stop>
         <h4>Detected In-App Browser</h4>
@@ -279,25 +323,44 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Main Banner Slide -->
-    <div v-if="homeSettings.showSlider" class="space-y-2">
-      <div v-if="sliderItems.length" class="slider-list">
-        <a
-          v-for="(item, index) in sliderItems"
-          :key="`${item.title}-${index}`"
-          :href="item.link_url || '#'"
-          target="_blank"
-          rel="noopener"
-          class="main-banner"
-        >
-          <img v-if="item.image_url" :src="item.image_url" :alt="item.title || 'Banner'" @error="handleProductImageError">
-          <div v-else class="slider-no-image">
-            <strong>{{ item.title || 'Slider' }}</strong>
-            <span>{{ item.link_url || 'No image added' }}</span>
-          </div>
-        </a>
+    <!-- ===== AUTO SLIDER ===== -->
+    <div v-if="homeSettings.showSlider && sliderItems.length" class="slider-section" @mouseenter="stopSliderTimer" @mouseleave="startSliderTimer">
+      <div class="slider-track-wrap">
+        <!-- Slides -->
+        <div class="slider-track" :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
+          <a
+            v-for="(item, index) in sliderItems"
+            :key="`slide-${index}`"
+            :href="item.link_url || '#'"
+            target="_blank"
+            rel="noopener"
+            class="slide-item"
+          >
+            <img v-if="item.image_url" :src="item.image_url" :alt="item.title || 'Banner'" @error="handleProductImageError">
+            <div v-else class="slide-placeholder">
+              <strong>{{ item.title || 'Slider' }}</strong>
+            </div>
+          </a>
+        </div>
+
+        <!-- Arrows (only show if more than 1 slide) -->
+        <template v-if="sliderItems.length > 1">
+          <button class="slider-arrow slider-arrow-left" type="button" aria-label="Previous slide" @click.prevent="prevSlide">‹</button>
+          <button class="slider-arrow slider-arrow-right" type="button" aria-label="Next slide" @click.prevent="nextSlide">›</button>
+        </template>
       </div>
-      <div class="slider-indicator" aria-hidden="true">—</div>
+
+      <!-- Dots -->
+      <div v-if="sliderItems.length > 1" class="slider-dots">
+        <button
+          v-for="(_, i) in sliderItems"
+          :key="i"
+          :class="['slider-dot', { active: i === currentSlide }]"
+          type="button"
+          :aria-label="`Go to slide ${i + 1}`"
+          @click="goToSlide(i)"
+        />
+      </div>
     </div>
 
     <!-- Quick Action Support Buttons -->
@@ -323,17 +386,25 @@ onMounted(() => {
     </div>
 
     <!-- Section Title -->
-    <h3 v-if="homeSettings.showCategories && categoryHeading" class="section-title">{{ categoryHeading }}</h3>
+    <h3 v-if="homeSettings.showCategories && categoryHeading" class="section-title">
+      <span class="section-title-line"></span>
+      {{ categoryHeading }}
+      <span class="section-title-line"></span>
+    </h3>
 
-    <!-- State Handlers -->
-    <div v-if="pending" class="status-msg">
-      Loading top-up catalog...
+    <!-- Skeleton Loading State -->
+    <div v-if="pending" class="product-grid">
+      <div v-for="i in 9" :key="i" class="product-skeleton">
+        <div class="skeleton-img"></div>
+        <div class="skeleton-text"></div>
+      </div>
     </div>
+
     <div v-else-if="error" class="status-msg error-msg">
       We could not load the catalog right now. Please try again.
     </div>
 
-    <!-- Dynamic Product Grid from API -->
+    <!-- Product Grid -->
     <div v-else-if="homeSettings.showCategories" class="product-grid">
       <NuxtLink
         v-for="item in products"
@@ -343,16 +414,17 @@ onMounted(() => {
       >
         <div class="img-wrapper">
           <img :src="item.image_url" :alt="item.title" loading="lazy" decoding="async" @error="handleProductImageError" />
+          <div class="img-shine"></div>
         </div>
         <p class="product-title">{{ item.title }}</p>
       </NuxtLink>
     </div>
 
-    <!-- Latest Orders Section -->
-    <div v-if="!homeSettings.showCategories" class="status-msg">
+    <div v-if="!homeSettings.showCategories && !pending" class="status-msg">
       Categories section is currently hidden by admin.
     </div>
 
+    <!-- Latest Orders Section -->
     <div v-if="homeSettings.showLatestOrders" class="orders-section">
       <div class="orders-header">
         <h4>Latest Orders</h4>
@@ -377,47 +449,463 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* ===== PAGE ===== */
 .home-page {
   padding-top: 10px;
   max-width: 1260px;
   margin: 0 auto;
+  padding-bottom: 20px;
 }
 
-/* Notice Box */
+/* ===== NOTICE BOX ===== */
 .notice-box {
-  background: var(--theme-color);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: linear-gradient(135deg, var(--theme-color) 0%, color-mix(in srgb, var(--theme-color) 80%, #000) 100%);
   color: #ffffff;
-  padding: 12px 14px;
-  margin: 0 12px 10px 12px;
-  border-radius: 6px;
+  padding: 12px 40px 12px 14px;
+  margin: 0 12px 12px 12px;
+  border-radius: 10px;
   position: relative;
   font-size: 13px;
-  line-height: 1.5;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  line-height: 1.55;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+
+.notice-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.notice-content {
+  flex: 1;
 }
 
 .notice-title {
   font-weight: 900;
-  font-size: 16px;
-  margin-bottom: 2px;
+  font-size: 14px;
+  margin-right: 5px;
 }
 
 .notice-close {
   position: absolute;
   right: 10px;
-  top: 8px;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.7);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.5);
   color: white;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.notice-close:hover {
+  background: rgba(255,255,255,0.35);
+}
+
+.notice-slide-enter-active { transition: all 0.3s ease; }
+.notice-slide-leave-active { transition: all 0.25s ease; }
+.notice-slide-enter-from { opacity: 0; transform: translateY(-8px); }
+.notice-slide-leave-to { opacity: 0; transform: translateY(-8px); }
+
+/* ===== SLIDER ===== */
+.slider-section {
+  margin: 0 12px 14px 12px;
+  position: relative;
+}
+
+.slider-track-wrap {
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.13);
+  background: #1a1a2e;
+}
+
+.slider-track {
+  display: flex;
+  transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+.slide-item {
+  min-width: 100%;
+  display: block;
+  position: relative;
+}
+
+.slide-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  aspect-ratio: 16/6;
+}
+
+@media (max-width: 480px) {
+  .slide-item img {
+    aspect-ratio: 16/7;
+  }
+}
+
+.slide-placeholder {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--theme-color), #0a0a1a);
+}
+
+.slider-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.4);
+  border: none;
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.2s;
+  z-index: 2;
+  backdrop-filter: blur(4px);
+}
+
+.slider-arrow:hover {
+  background: rgba(0,0,0,0.65);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.slider-arrow-left { left: 8px; }
+.slider-arrow-right { right: 8px; }
+
+.slider-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.slider-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c5cdd6;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.25s;
+}
+
+.slider-dot.active {
+  background: var(--theme-color);
+  width: 22px;
+  border-radius: 4px;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 0 12px;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+.action-btn {
+  background: var(--theme-color);
+  color: white;
+  padding: 9px 7px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(15, 104, 56, 0.22);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.action-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 6px rgba(15, 104, 56, 0.15);
+}
+
+.icon-circle {
+  width: 30px;
+  height: 30px;
+  background: rgba(255,255,255,0.92);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-svg {
+  width: 15px;
+  height: 15px;
+  fill: var(--theme-color);
+}
+
+.btn-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.btn-text .sub {
+  font-size: 9px;
+  text-transform: uppercase;
+  opacity: 0.82;
+  letter-spacing: 0.4px;
+}
+
+.btn-text .main {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+/* ===== SECTION TITLE ===== */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin: 18px 12px 12px 12px;
+  text-transform: uppercase;
+}
+
+.section-title-line {
+  flex: 1;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
+}
+
+/* ===== SKELETON LOADING ===== */
+.product-skeleton {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 8px 8px 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.skeleton-img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #e8ecef 25%, #f4f6f8 50%, #e8ecef 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+.skeleton-text {
+  height: 12px;
+  border-radius: 6px;
+  margin-top: 10px;
+  background: linear-gradient(90deg, #e8ecef 25%, #f4f6f8 50%, #e8ecef 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+  width: 70%;
+  margin-left: 15%;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ===== PRODUCT GRID ===== */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 0 12px;
+}
+
+@media (min-width: 640px) {
+  .product-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (min-width: 900px) {
+  .product-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .product-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.product-card {
+  background: #ffffff;
+  border-radius: 12px;
+  text-align: center;
+  padding: 8px 8px 10px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+}
+
+.product-card:active {
+  transform: scale(0.94);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.img-wrapper {
+  width: 100%;
+  aspect-ratio: 1/1;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #f1f5f9;
+  position: relative;
+}
+
+.img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .img-wrapper img {
+  transform: scale(1.05);
+}
+
+.img-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.product-title {
+  color: #1e293b;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-top: 7px;
+  line-height: 1.25;
+  word-break: break-word;
+  width: 100%;
+}
+
+/* ===== STATUS MESSAGE ===== */
+.status-msg {
+  text-align: center;
+  padding: 30px 15px;
+  color: #64748b;
   font-size: 14px;
 }
+
+.error-msg {
+  color: #e11d48;
+}
+
+/* ===== ORDERS SECTION ===== */
+.orders-section {
+  margin: 24px 12px 0 12px;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.orders-header {
+  text-align: center;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.orders-header h4 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.orders-header p {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+
+.order-name {
+  color: #334155;
+  font-weight: 500;
+}
+
+.order-status {
+  color: #16a34a;
+  font-weight: 700;
+  font-size: 11px;
+  background: #dcfce7;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* ===== POPUPS ===== */
+.popup-fade-enter-active { transition: all 0.25s ease; }
+.popup-fade-leave-active { transition: all 0.2s ease; }
+.popup-fade-enter-from, .popup-fade-leave-to { opacity: 0; }
 
 .home-popup-overlay {
   position: fixed;
@@ -457,12 +945,7 @@ onMounted(() => {
   display: grid;
   place-items: center;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
-}
-
-.home-popup-close-image {
-  max-width: 20px;
-  max-height: 20px;
-  object-fit: contain;
+  cursor: pointer;
 }
 
 .home-popup-image-wrap {
@@ -491,14 +974,14 @@ onMounted(() => {
 }
 
 .home-popup-title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   color: #0f172a;
   margin-bottom: 8px;
 }
 
 .home-popup-note {
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.55;
   color: #1e293b;
   margin-bottom: 16px;
@@ -508,12 +991,12 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 46px;
+  min-height: 44px;
   padding: 0 18px;
   border-radius: 10px;
   background: var(--theme-color);
   color: #fff;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   text-decoration: none;
 }
@@ -524,15 +1007,15 @@ onMounted(() => {
   justify-content: center;
   gap: 8px;
   margin-left: 10px;
-  margin-top: 12px;
   padding: 0 16px;
-  min-height: 46px;
+  min-height: 44px;
   border-radius: 10px;
   border: 0;
   background: var(--theme-color);
   color: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
+  cursor: pointer;
 }
 
 .detect-popup-overlay {
@@ -555,14 +1038,14 @@ onMounted(() => {
 }
 
 .detect-popup-card h4 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   color: #0f172a;
 }
 
 .detect-popup-card p {
   margin-top: 8px;
-  font-size: 15px;
+  font-size: 14px;
   color: #334155;
   line-height: 1.55;
 }
@@ -579,7 +1062,8 @@ onMounted(() => {
   border-radius: 10px;
   padding: 0 14px;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 13px;
+  cursor: pointer;
 }
 
 .detect-popup-open {
@@ -592,308 +1076,5 @@ onMounted(() => {
   border: 1px solid #cbd5e1;
   background: #f8fafc;
   color: #0f172a;
-}
-
-/* Banner */
-.main-banner {
-  margin: 12px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  background-color: #194f2f;
-}
-
-.main-banner img {
-  width: 100%;
-  height: auto;
-  display: block;
-  object-fit: cover;
-}
-
-.slider-list {
-  display: grid;
-  gap: 8px;
-}
-
-.slider-indicator {
-  text-align: center;
-  margin-top: -2px;
-  color: #0f172a;
-  font-size: 28px;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.slider-no-image {
-  min-height: 90px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  color: #ffffff;
-}
-
-.slider-no-image strong {
-  font-size: 14px;
-}
-
-.slider-no-image span {
-  font-size: 12px;
-  opacity: 0.92;
-  margin-top: 4px;
-}
-
-/* Action Social Buttons */
-.action-buttons {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  padding: 0 12px;
-  margin-top: 15px;
-}
-
-.action-btn {
-  background: var(--theme-color);
-  color: white;
-  padding: 8px 6px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-  box-shadow: 0 4px 10px rgba(15, 104, 56, 0.2);
-}
-
-.icon-circle {
-  width: 28px;
-  height: 28px;
-  background: #ffffff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.icon-svg {
-  width: 15px;
-  height: 15px;
-  fill: var(--theme-color);
-}
-
-.btn-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.btn-text .sub {
-  font-size: 9px;
-  text-transform: uppercase;
-  opacity: 0.85;
-  letter-spacing: 0.3px;
-}
-
-.btn-text .main {
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.1;
-}
-
-/* Section Title */
-.section-title {
-  text-align: center;
-  color: #1e293b;
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  margin: 24px 0 14px 0;
-}
-
-/* Product Grid */
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  padding: 0 12px;
-}
-
-.product-card {
-  background: #ffffff;
-  border-radius: 12px;
-  text-align: center;
-  padding: 8px 8px 12px 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  text-decoration: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: transform 0.15s ease;
-}
-
-.product-card:active {
-  transform: scale(0.97);
-}
-
-.img-wrapper {
-  width: 100%;
-  aspect-ratio: 1/1;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #f1f5f9;
-}
-
-.img-wrapper img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.product-title {
-  color: #1e293b;
-  font-size: 12px;
-  font-weight: 700;
-  margin-top: 8px;
-  line-height: 1.2;
-  word-break: break-word;
-}
-
-/* Status Message */
-.status-msg {
-  text-align: center;
-  padding: 30px 15px;
-  color: #64748b;
-  font-size: 14px;
-}
-.error-msg {
-  color: #e11d48;
-}
-
-/* Orders Section */
-.orders-section {
-  margin: 30px 12px 15px 12px;
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-}
-
-.orders-header {
-  text-align: center;
-  margin-bottom: 12px;
-}
-
-.orders-header h4 {
-  font-size: 18px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.orders-header p {
-  font-size: 12px;
-  color: #64748b;
-  margin-top: 2px;
-}
-
-.orders-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.order-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background-color: #f8fafc;
-}
-
-.order-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: #334155;
-}
-
-.order-status {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--theme-color);
-}
-
-@media (min-width: 1024px) {
-  .home-page {
-    padding-top: 12px;
-  }
-
-  .notice-box {
-    margin: 0 14px 12px 14px;
-    border-radius: 4px;
-    font-size: 12px;
-    line-height: 1.45;
-  }
-
-  .notice-title {
-    font-size: 22px;
-    margin-bottom: 4px;
-  }
-
-  .notice-close {
-    right: 9px;
-    top: 8px;
-    width: 21px;
-    height: 21px;
-  }
-
-  .main-banner {
-    margin: 8px 14px;
-    border-radius: 2px;
-  }
-
-  .main-banner img {
-    max-height: 350px;
-    object-fit: cover;
-  }
-
-  .action-buttons {
-    max-width: 760px;
-    margin: 16px auto 0;
-    gap: 12px;
-    padding: 0;
-  }
-
-  .section-title {
-    margin: 24px 0 14px;
-    font-size: 44px;
-    line-height: 1.06;
-    letter-spacing: 0;
-  }
-
-  .product-grid {
-    display: flex;
-    overflow-x: auto;
-    gap: 14px;
-    padding: 0 14px 8px;
-    scrollbar-width: thin;
-    scroll-snap-type: x proximity;
-  }
-
-  .product-card {
-    flex: 0 0 110px;
-    border-radius: 8px;
-    padding: 5px 5px 10px;
-    scroll-snap-align: start;
-  }
-
-  .img-wrapper {
-    border-radius: 6px;
-  }
-
-  .product-title {
-    margin-top: 6px;
-    font-size: 10px;
-    line-height: 1.25;
-  }
 }
 </style>
