@@ -36,11 +36,11 @@ const noticeText = computed(() => {
 
 const noticeDismissed = ref(false);
 
-// Track pressed/clicked product so it stays pushed inward and never pops back out
-const pressedProductId = ref<number | null>(null);
+// Firm click lock state
+const clickedProductId = ref<number | null>(null);
 
-function handleProductClick(id: number) {
-  pressedProductId.value = id;
+function onProductClick(id: number) {
+  clickedProductId.value = id;
 }
 
 // Group products dynamically by Category title from database/admin
@@ -73,10 +73,10 @@ function handleProductImageError(event: Event) {
 
 <template>
   <div class="home-page">
-    <!-- Notice Box -->
+    <!-- Notice Box matching rgbazer.com -->
     <div v-if="!noticeDismissed && noticeText" class="notice-box">
       <button class="notice-close" type="button" aria-label="Close Notice" @click="noticeDismissed = true">
-        <svg viewBox="0 0 24 24" class="close-icon"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/></svg>
+        <svg viewBox="0 0 24 24" class="close-icon"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.2" fill="none"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2.2"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2.2"/></svg>
       </button>
       <div class="notice-title">Notice:</div>
       <div class="notice-text">{{ noticeText }}</div>
@@ -120,10 +120,9 @@ function handleProductImageError(event: Event) {
             :key="item.id"
             :to="`/topup/${item.slug}`"
             class="product-card"
-            :class="{ 'is-clicked': pressedProductId === item.id }"
-            @click="handleProductClick(item.id)"
+            @click="onProductClick(item.id)"
           >
-            <div class="product-img-wrap" :class="{ 'is-inward': pressedProductId === item.id }">
+            <div class="product-img-wrap" :class="{ 'is-pressed': clickedProductId === item.id }">
               <img :src="item.image_url" :alt="item.title" loading="lazy" decoding="async" @error="handleProductImageError" />
             </div>
             <p class="product-title">{{ item.title }}</p>
@@ -136,43 +135,43 @@ function handleProductImageError(event: Event) {
 
 <style scoped>
 .home-page {
-  padding-top: 10px;
-  max-width: 1240px;
+  padding-top: 8px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding-bottom: 30px;
+  padding-bottom: 24px;
 }
 
 /* ===== NOTICE BOX ===== */
 .notice-box {
   background: #0d682f;
   color: #ffffff;
-  padding: 10px 14px;
-  margin: 0 12px 12px;
-  border-radius: 0px;
+  padding: 8px 12px 9px 12px;
+  margin: 0 10px 10px 10px;
+  border-radius: 4px;
   position: relative;
-  font-size: 13px;
-  line-height: 1.45;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .notice-title {
   font-weight: 800;
-  font-size: 15px;
+  font-size: 13.5px;
   margin-bottom: 2px;
   color: #ffffff;
+  line-height: 1.2;
 }
 
 .notice-text {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #ffffff;
-  padding-right: 28px;
-  line-height: 1.5;
+  padding-right: 24px;
+  line-height: 1.45;
+  font-weight: 400;
 }
 
 .notice-close {
   position: absolute;
-  top: 8px;
-  right: 10px;
+  top: 7px;
+  right: 8px;
   background: transparent;
   border: none;
   color: #ffffff;
@@ -184,13 +183,13 @@ function handleProductImageError(event: Event) {
 }
 
 .close-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 /* ===== SLIDER ===== */
 .slider-wrapper {
-  margin: 0 12px 14px;
+  margin: 0 10px 6px 10px;
 }
 
 .slider-container {
@@ -212,41 +211,40 @@ function handleProductImageError(event: Event) {
 }
 
 .slider-dash-indicator {
-  width: 20px;
-  height: 5px;
+  width: 16px;
+  height: 4px;
   background: #000000;
-  border-radius: 3px;
-  margin: 8px auto 0;
+  border-radius: 2px;
+  margin: 6px auto 0;
 }
 
 /* ===== CATEGORIES & PRODUCTS ===== */
 .category-block {
-  margin-top: 24px;
-  margin-bottom: 20px;
-  padding: 0 12px;
+  margin-top: 16px;
+  margin-bottom: 14px;
+  padding: 0 10px;
 }
 
 .category-title {
   text-align: center;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
   color: #17395c;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   letter-spacing: -0.2px;
 }
 
-/* Product Grid matching Screenshot proportions */
+/* Product Grid matching rgbazer.com */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 
-/* On Desktop: matching PC screenshot size (clean compact cards) */
 @media (min-width: 640px) {
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(115px, 130px));
-    gap: 16px;
+    gap: 14px;
     justify-content: start;
   }
 }
@@ -265,17 +263,16 @@ function handleProductImageError(event: Event) {
   width: 100%;
   max-width: 130px;
   aspect-ratio: 1/1;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   background: #000000;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  /* Solid firm press with zero bouncy spring */
-  transition: transform 0.05s linear;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  transition: transform 0.08s ease-out;
 }
 
-/* Firm Inward Press on Click: stays inward once clicked */
+/* Firm Inward Press */
 .product-card:active .product-img-wrap,
-.product-img-wrap.is-inward {
+.product-img-wrap.is-pressed {
   transform: scale(0.91);
 }
 
@@ -291,7 +288,7 @@ function handleProductImageError(event: Event) {
   font-size: 11px;
   font-weight: 700;
   text-align: center;
-  margin-top: 6px;
+  margin-top: 5px;
   line-height: 1.25;
   word-break: break-word;
   max-width: 130px;
@@ -299,8 +296,9 @@ function handleProductImageError(event: Event) {
 
 .status-msg {
   text-align: center;
-  padding: 30px;
+  padding: 24px;
   color: #64748b;
+  font-size: 13px;
 }
 
 .error-msg {

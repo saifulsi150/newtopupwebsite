@@ -108,17 +108,17 @@ async function logout() {
 
 <template>
   <div class="themed-root relative flex min-h-screen flex-col justify-between bg-[#f1f6fc] text-slate-900" :style="themeStyles">
-    <!-- HEADER -->
-    <header class="fixed inset-x-0 top-0 z-50 h-[70px] border-b border-slate-100 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.03)] md:h-[74px]">
-      <div class="mx-auto flex h-full max-w-6xl items-center justify-between px-4 lg:px-8">
+    <!-- HEADER (matching rgbazer.com) -->
+    <header class="fixed inset-x-0 top-0 z-50 h-[62px] border-b border-slate-100 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.03)] md:h-[68px]">
+      <div class="mx-auto flex h-full max-w-6xl items-center justify-between px-3.5 lg:px-8">
         <!-- Logo -->
         <NuxtLink to="/" class="flex items-center gap-2" @click="closeMenu">
-          <img v-if="headerLogoUrl" :src="headerLogoUrl" alt="Logo" class="h-9 w-auto md:h-11 object-contain" />
+          <img v-if="headerLogoUrl" :src="headerLogoUrl" alt="Logo" class="h-8 w-auto md:h-10 object-contain" />
           <div v-else class="flex items-center gap-1.5">
-            <svg class="h-7 w-7 text-[#e11d48]" viewBox="0 0 24 24" fill="currentColor">
+            <svg class="h-6 w-6 text-[#e11d48]" viewBox="0 0 24 24" fill="currentColor">
               <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
             </svg>
-            <span class="text-xl font-black tracking-tight text-[#e11d48]">{{ siteName || 'RG BAZZER' }}</span>
+            <span class="text-lg font-black tracking-tight text-[#e11d48]">{{ siteName || 'RG BAZZER' }}</span>
           </div>
         </NuxtLink>
 
@@ -133,39 +133,39 @@ async function logout() {
 
           <!-- If Logged In -->
           <template v-if="showProtectedUi">
-            <NuxtLink to="/account" class="inline-flex items-center gap-2 rounded-full bg-[#0a6b2a] px-4 py-2 text-sm font-bold text-white shadow-sm transition">
+            <NuxtLink to="/account" class="inline-flex items-center gap-1.5 rounded-full bg-[#0a6b2a] px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition">
               <span>💳</span>
               <span>{{ walletBalance }}৳</span>
             </NuxtLink>
 
-            <button type="button" class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 ring-2 ring-slate-200 transition" @click="toggleMenu">
+            <button type="button" class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-slate-100 ring-2 ring-slate-200 transition" @click="toggleMenu">
               <img :src="userAvatarSrc" alt="User" class="h-full w-full object-cover" referrerpolicy="no-referrer" />
             </button>
           </template>
 
           <!-- If Guest -->
           <template v-else>
-            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-lg bg-[#0d682f] px-5 py-2 text-sm font-bold text-white transition hover:opacity-90 shadow-sm">
+            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-md bg-[#0d682f] px-4 py-1.5 text-[13.5px] font-bold text-white transition hover:opacity-90 shadow-sm">
               Login
             </NuxtLink>
           </template>
         </nav>
 
         <!-- Right Nav: Mobile -->
-        <div class="flex md:hidden items-center gap-2.5">
+        <div class="flex md:hidden items-center gap-2">
           <template v-if="showProtectedUi">
-            <NuxtLink to="/account" class="inline-flex items-center gap-1.5 rounded-full bg-[#0a6b2a] px-3.5 py-1.5 text-xs font-bold text-white shadow-sm">
+            <NuxtLink to="/account" class="inline-flex items-center gap-1.5 rounded-full bg-[#0a6b2a] px-3 py-1.5 text-xs font-bold text-white shadow-sm">
               <span>💳</span>
               <span>{{ walletBalance }}৳</span>
             </NuxtLink>
 
-            <button type="button" class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-slate-100 ring-2 ring-slate-200" @click="toggleMenu">
+            <button type="button" class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200" @click="toggleMenu">
               <img :src="userAvatarSrc" alt="User" class="h-full w-full object-cover" referrerpolicy="no-referrer" />
             </button>
           </template>
 
           <template v-else>
-            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-lg bg-[#0d682f] px-4 py-1.5 text-xs font-bold text-white shadow-sm">
+            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-md bg-[#0d682f] px-3.5 py-1 text-[13px] font-bold text-white shadow-sm">
               Login
             </NuxtLink>
           </template>
@@ -174,7 +174,7 @@ async function logout() {
 
       <!-- Profile Menu Dropdown -->
       <div v-if="showProfileMenu" class="fixed inset-0 z-40 bg-black/10" @click="closeMenu"></div>
-      <div v-if="showProfileMenu" class="absolute right-4 top-[70px] z-50 w-64 rounded-xl border border-slate-200 bg-white p-3 shadow-2xl md:right-8">
+      <div v-if="showProfileMenu" class="absolute right-4 top-[65px] z-50 w-64 rounded-xl border border-slate-200 bg-white p-3 shadow-2xl md:right-8">
         <div class="mb-3 border-b border-slate-100 pb-3">
           <div class="text-sm font-bold text-slate-900">{{ (auth.user?.value || auth.user)?.name || 'User' }}</div>
           <div class="text-xs text-slate-500">{{ (auth.user?.value || auth.user)?.email || '' }}</div>
@@ -195,7 +195,7 @@ async function logout() {
     </header>
 
     <!-- PAGE CONTENT -->
-    <main class="flex-1 pt-[70px] md:pt-[74px] pb-[70px] md:pb-0">
+    <main class="flex-1 pt-[62px] md:pt-[68px] pb-[64px] md:pb-0">
       <slot />
     </main>
 
@@ -261,18 +261,18 @@ async function logout() {
       </div>
     </footer>
 
-    <!-- BOTTOM MOBILE NAVIGATION (Clean as screenshot 3 & 4) -->
-    <nav class="fixed inset-x-0 bottom-0 z-40 h-[64px] border-t border-slate-200 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.04)] md:hidden">
+    <!-- BOTTOM MOBILE NAVIGATION (matching rgbazer.com: Home, Tutorial, TopUp, Contact Us) -->
+    <nav class="fixed inset-x-0 bottom-0 z-40 h-[58px] border-t border-slate-200 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.03)] md:hidden">
       <!-- If Logged In: 5 Items with Center Floating Add Money -->
       <div v-if="showProtectedUi" class="relative mx-auto grid h-full max-w-lg grid-cols-5 items-center text-center text-[10px] font-semibold">
-        <NuxtLink to="/" class="flex flex-col items-center gap-1 text-[#0d682f]">
+        <NuxtLink to="/" class="flex flex-col items-center gap-0.5 text-[#0d682f]">
           <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z"/>
           </svg>
           <span class="font-bold">Home</span>
         </NuxtLink>
 
-        <NuxtLink to="/orders" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-800">
+        <NuxtLink to="/orders" class="flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-800">
           <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
@@ -289,14 +289,14 @@ async function logout() {
           <span class="mt-6 text-[10px] font-semibold">Add Money</span>
         </NuxtLink>
 
-        <NuxtLink to="/codes" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-800">
+        <NuxtLink to="/codes" class="flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-800">
           <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
           </svg>
           <span>My Codes</span>
         </NuxtLink>
 
-        <NuxtLink to="/account" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-800">
+        <NuxtLink to="/account" class="flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-800">
           <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
           </svg>
@@ -304,36 +304,34 @@ async function logout() {
         </NuxtLink>
       </div>
 
-      <!-- If Guest: 4 Items -->
+      <!-- If Guest: 4 Items matching rgbazer.com (Home, Tutorial, TopUp, Contact Us) -->
       <div v-else class="mx-auto grid h-full max-w-lg grid-cols-4 items-center text-center text-[10px] font-semibold">
-        <NuxtLink to="/" class="flex flex-col items-center gap-1 text-[#0d682f]">
+        <NuxtLink to="/" class="flex flex-col items-center gap-0.5 text-[#0d682f]">
           <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z"/>
           </svg>
           <span class="font-bold">Home</span>
         </NuxtLink>
 
-        <NuxtLink to="/products" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-800">
+        <NuxtLink to="/tutorial" class="flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-800">
           <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            <rect x="2" y="4" width="20" height="15" rx="2"/><polygon points="10 8 16 11.5 10 15 10 8" fill="currentColor"/>
+          </svg>
+          <span>Tutorial</span>
+        </NuxtLink>
+
+        <NuxtLink to="/products" class="flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-800">
+          <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
           </svg>
           <span>TopUp</span>
         </NuxtLink>
 
-        <NuxtLink to="/contact" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-800">
+        <NuxtLink to="/contact" class="flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-800">
           <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            <path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
           </svg>
-          <span>Contact</span>
-        </NuxtLink>
-
-        <NuxtLink to="/login" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-800">
-          <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-            <polyline points="10 17 15 12 10 7"/>
-            <line x1="15" y1="12" x2="3" y2="12"/>
-          </svg>
-          <span>Login</span>
+          <span>Contact Us</span>
         </NuxtLink>
       </div>
     </nav>
