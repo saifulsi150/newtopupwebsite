@@ -21,111 +21,78 @@ function handleProductImageError(event: Event) {
 </script>
 
 <template>
-  <div class="products-page">
-    <h1 class="page-title">TopUp Catalog</h1>
-
-    <div v-if="pending" class="status-msg">
-      Loading products...
-    </div>
-
-    <div v-else class="product-grid">
-      <NuxtLink
-        v-for="item in products"
-        :key="item.id"
-        :to="`/topup/${item.slug}`"
-        class="product-card"
-        @click="onProductClick(item.id)"
-      >
-        <div class="product-img-wrap" :class="{ 'is-pressed': clickedProductId === item.id }">
-          <img :src="item.image_url" :alt="resolveTitle(item)" loading="lazy" decoding="async" @error="handleProductImageError" />
+  <div class="p-2">
+    <section class="my-2" id="topup">
+      <div class="container mx-auto">
+        <div class="text-center">
+          <div class="flex items-center justify-center px-4 mt-0 md:mt-2 pb-4">
+            <h3 class="text-2xl sm:text-3xl text-center font-primary font-bold mx-4 text-secondary-900">
+              TopUp Catalog
+            </h3>
+          </div>
         </div>
-        <p class="product-title">{{ resolveTitle(item) }}</p>
-      </NuxtLink>
-    </div>
+
+        <div v-if="pending" class="text-center py-10 text-slate-500 font-primary">
+          Loading products...
+        </div>
+
+        <div v-else class="pb-1 md:pb-10">
+          <div class="md:py-5 md:px-0 grid md:grid-cols-6 sm:grid-cols-4 grid-cols-3 md:gap-8 gap-4">
+            <div
+              v-for="product in products"
+              :key="product.id"
+              class="single-game-product mb-2 md:mb-6"
+            >
+              <NuxtLink
+                :to="`/topup/${product.slug}`"
+                class="triangle block text-decoration-none"
+                @click="onProductClick(product.id)"
+              >
+                <div class="cursor-pointer">
+                  <div
+                    class="inset-0 transform transition duration-300"
+                    :class="clickedProductId === product.id ? 'scale-90' : 'hover:scale-90'"
+                  >
+                    <div class="h-full w-full text-center mx-auto">
+                      <img
+                        :src="product.image_url"
+                        :alt="resolveTitle(product)"
+                        class="rounded-md w-full aspect-square object-cover"
+                        loading="lazy"
+                        decoding="async"
+                        @error="handleProductImageError"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h1 class="capitalize text-xs text-center pt-3 font-primary font-extralight text-secondary-500">
+                    {{ resolveTitle(product) }}
+                  </h1>
+                </div>
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.products-page {
-  padding-top: 12px;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-bottom: 24px;
-}
-
-.page-title {
-  text-align: center;
-  font-size: 20px;
-  font-weight: 800;
+.text-secondary-900 {
   color: #17395c;
-  margin-bottom: 14px;
-  letter-spacing: -0.2px;
 }
 
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  padding: 0 10px;
-}
-
-@media (min-width: 640px) {
-  .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(105px, 120px));
-    gap: 12px;
-    justify-content: start;
-  }
-}
-
-.product-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
-  outline: none;
-  cursor: pointer;
-}
-
-.product-img-wrap {
-  width: 100%;
-  max-width: 115px;
-  aspect-ratio: 1/1;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #f1f6fc;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  transition: transform 0.08s ease-out;
-}
-
-/* Firm Inward Press */
-.product-card:active .product-img-wrap,
-.product-img-wrap.is-pressed {
-  transform: scale(0.91);
-}
-
-.product-img-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.product-title {
+.text-secondary-500 {
   color: #17395c;
-  font-size: 10.5px;
-  font-weight: 700;
-  text-align: center;
-  margin-top: 4px;
-  line-height: 1.2;
-  word-break: break-word;
-  max-width: 115px;
 }
 
-.status-msg {
-  text-align: center;
-  padding: 30px;
-  color: #64748b;
-  font-size: 13px;
+.font-primary {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.scale-90 {
+  transform: scale(0.90);
 }
 </style>

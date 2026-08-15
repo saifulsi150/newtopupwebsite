@@ -34,6 +34,10 @@ const noticeText = computed(() => {
   return String(homeSettings.value?.notice || '').trim();
 });
 
+const noticeTitle = computed(() => {
+  return String(homeSettings.value?.notice_title || 'Notice:').trim();
+});
+
 const noticeBgColor = computed(() => {
   const raw = String(homeSettings.value?.notice_bg_color || '').trim();
   return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#0d682f';
@@ -82,57 +86,101 @@ function handleProductImageError(event: Event) {
 </script>
 
 <template>
-  <div class="home-page">
-    <!-- Notice Box: Flush Full-Width Sharp Box matching rgbazer.com -->
-    <div
-      v-if="!noticeDismissed && noticeText"
-      class="notice-box"
-      :style="{ backgroundColor: noticeBgColor, color: noticeTextColor }"
-    >
-      <button class="notice-close" type="button" aria-label="Close Notice" @click="noticeDismissed = true">
-        <svg viewBox="0 0 24 24" class="close-icon"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.2" fill="none"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2.2"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2.2"/></svg>
-      </button>
-      <div class="notice-title" :style="{ color: noticeTextColor }">Notice:</div>
-      <div class="notice-text" :style="{ color: noticeTextColor }">{{ noticeText }}</div>
-    </div>
-
-    <!-- Main Banner Slider -->
-    <div v-if="homeSettings.showSlider !== false && sliderItems.length" class="slider-wrapper">
-      <div class="slider-container">
-        <a
-          v-for="(item, index) in sliderItems"
-          :key="index"
-          :href="item.link_url || '#'"
-          target="_blank"
-          rel="noopener"
-          class="slide-item"
+  <div class="p-2">
+    <!-- Notice Container (Exact Blade Structure) -->
+    <div v-if="!noticeDismissed && noticeText" class="notice-container container m-auto mb-2">
+      <div
+        class="alert alert-light notice-style alert-dismissible fade show position-relative"
+        role="alert"
+        :style="{ backgroundColor: noticeBgColor, color: noticeTextColor }"
+      >
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Close"
+          @click="noticeDismissed = true"
         >
-          <img :src="item.image_url" :alt="item.title || 'Banner'" @error="handleProductImageError" />
-        </a>
+          ✕
+        </button>
+        <div class="notice-heading" :style="{ color: noticeTextColor }">{{ noticeTitle }}</div>
+        <div class="notice-text mb-0" :style="{ color: noticeTextColor }">{{ noticeText }}</div>
       </div>
-
-      <!-- Single Dash Indicator -->
-      <div class="slider-dash-indicator"></div>
     </div>
 
-    <!-- Dynamic Product Categories & Grid -->
-    <template v-if="homeSettings.showCategories !== false && categoryGroups.length">
-      <section v-for="cat in categoryGroups" :key="cat.title" class="category-block">
-        <h2 class="category-title">{{ cat.title }}</h2>
+    <!-- Slider Section (Exact Blade Structure) -->
+    <section v-if="homeSettings.showSlider !== false && sliderItems.length" class="container m-auto">
+      <section class="carousel my-4" dir="ltr" aria-label="Gallery" tabindex="0" style="margin-bottom: 10px !important;">
+        <div class="carousel__viewport">
+          <ol class="carousel__track">
+            <li v-for="(slider, index) in sliderItems" :key="index" class="carousel__slide">
+              <div class="carousel__item">
+                <a v-if="slider.link_url" :href="slider.link_url" target="_blank" rel="noopener">
+                  <img :src="slider.image_url" :alt="slider.title || 'Slider'" class="rounded-md w-full" @error="handleProductImageError" />
+                </a>
+                <img v-else :src="slider.image_url" :alt="slider.title || 'Slider'" class="rounded-md w-full" @error="handleProductImageError" />
+              </div>
+            </li>
+          </ol>
+        </div>
 
-        <div class="product-grid">
-          <NuxtLink
-            v-for="item in cat.products"
-            :key="item.id"
-            :to="`/topup/${item.slug}`"
-            class="product-card"
-            @click="onProductClick(item.id)"
-          >
-            <div class="product-img-wrap" :class="{ 'is-pressed': clickedProductId === item.id }">
-              <img :src="item.image_url" :alt="item.title" loading="lazy" decoding="async" @error="handleProductImageError" />
+        <!-- Single Dash Pagination Indicator -->
+        <div class="carousel__dash_indicator"></div>
+      </section>
+    </section>
+
+    <!-- Products By Category (Exact Blade Structure) -->
+    <template v-if="homeSettings.showCategories !== false && categoryGroups.length">
+      <section v-for="category in categoryGroups" :key="category.title" class="my-2" id="topup">
+        <div class="container mx-auto">
+          <!-- Category Title -->
+          <div class="text-center">
+            <div class="flex items-center justify-center px-4 mt-0 md:mt-2 section-contact-gap pb-4">
+              <h3 class="text-2xl sm:text-3xl text-center font-primary font-bold mx-4 text-secondary-900">
+                {{ category.title }}
+              </h3>
             </div>
-            <p class="product-title">{{ item.title }}</p>
-          </NuxtLink>
+          </div>
+
+          <!-- Product Grid: grid-cols-3 gap-4 on mobile, md:grid-cols-6 sm:grid-cols-4 md:gap-8 on desktop -->
+          <div class="pb-1 md:pb-10">
+            <div class="md:py-5 md:px-0 grid md:grid-cols-6 sm:grid-cols-4 grid-cols-3 md:gap-8 gap-4">
+              <div
+                v-for="product in category.products"
+                :key="product.id"
+                class="single-game-product mb-2 md:mb-6"
+              >
+                <NuxtLink
+                  :to="`/topup/${product.slug}`"
+                  class="triangle block text-decoration-none"
+                  @click="onProductClick(product.id)"
+                >
+                  <div class="cursor-pointer">
+                    <!-- Exact Scale 90 Transition on Click / Hover -->
+                    <div
+                      class="inset-0 transform transition duration-300"
+                      :class="clickedProductId === product.id ? 'scale-90' : 'hover:scale-90'"
+                    >
+                      <div class="h-full w-full text-center mx-auto">
+                        <img
+                          :src="product.image_url"
+                          :alt="product.title"
+                          class="rounded-md w-full aspect-square object-cover"
+                          loading="lazy"
+                          decoding="async"
+                          @error="handleProductImageError"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h1 class="capitalize text-xs text-center pt-3 font-primary font-extralight text-secondary-500">
+                      {{ product.title }}
+                    </h1>
+                  </div>
+                </NuxtLink>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </template>
@@ -140,163 +188,86 @@ function handleProductImageError(event: Event) {
 </template>
 
 <style scoped>
-.home-page {
-  padding-top: 0px;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-bottom: 24px;
-}
-
-/* ===== NOTICE BOX: FLUSH & FULL WIDTH (1:1 with rgbazer.com) ===== */
-.notice-box {
-  background: #0d682f;
-  color: #ffffff;
-  padding: 6px 12px 7px 12px;
-  margin: 0 0 8px 0;
-  width: 100%;
-  border-radius: 0px;
+/* ===== EXACT BLADE STYLES ===== */
+.notice-style {
+  padding: 10px 14px;
+  border-radius: 4px;
   position: relative;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
-.notice-title {
-  font-weight: 800;
-  font-size: 13.5px;
-  margin-bottom: 2px;
-  color: #ffffff;
-  line-height: 1.2;
+.notice-style .btn-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.notice-style .notice-heading {
+  font-size: 16px;
+  font-weight: 700;
+  padding-bottom: 3px;
 }
 
 .notice-text {
-  font-size: 11.5px;
-  color: #ffffff;
-  padding-right: 24px;
-  line-height: 1.45;
+  font-size: 12px;
   font-weight: 400;
+  font-family: "Times New Roman", Times, serif;
+  line-height: 1.45;
 }
 
-.notice-close {
-  position: absolute;
-  top: 7px;
-  right: 8px;
-  background: transparent;
-  border: none;
-  color: #ffffff;
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.close-icon {
-  width: 18px;
-  height: 18px;
-}
-
-/* ===== SLIDER ===== */
-.slider-wrapper {
-  margin: 0 12px 4px 12px;
-}
-
-.slider-container {
-  border-radius: 0px;
+/* Slider */
+.carousel__viewport {
   overflow: hidden;
-  background: transparent;
 }
 
-.slide-item {
+.carousel__track {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.carousel__slide {
   width: 100%;
-  display: block;
+  flex-shrink: 0;
 }
 
-.slide-item img {
+.carousel__item img {
+  display: block;
   width: 100%;
   height: auto;
-  display: block;
-  object-fit: contain;
 }
 
-.slider-dash-indicator {
+.carousel__dash_indicator {
   width: 16px;
   height: 4px;
   background: #000000;
   border-radius: 2px;
-  margin: 8px auto 14px;
+  margin: 8px auto 0;
 }
 
-/* ===== CATEGORIES & SPACING ===== */
-.category-block {
-  margin-top: 0;
-  margin-bottom: 16px;
-  padding: 0 14px;
-}
-
-.category-title {
-  text-align: center;
-  font-size: 22px;
-  font-weight: 800;
+/* Category Title Color */
+.text-secondary-900 {
   color: #17395c;
-  margin-bottom: 12px;
-  letter-spacing: -0.2px;
 }
 
-/* Product Grid: 3 columns with 14px row-gap and 12px column-gap */
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  column-gap: 12px;
-  row-gap: 14px;
-}
-
-@media (min-width: 640px) {
-  .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(105px, 120px));
-    gap: 16px 14px;
-    justify-content: start;
-  }
-}
-
-.product-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
-  outline: none;
-  cursor: pointer;
-}
-
-.product-img-wrap {
-  width: 100%;
-  aspect-ratio: 1/1;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #f1f6fc;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  transition: transform 0.1s ease-in-out;
-}
-
-/* Firm Inward Press */
-.product-card:active .product-img-wrap,
-.product-img-wrap.is-pressed {
-  transform: scale(0.92);
-}
-
-.product-img-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.product-title {
+/* Product Title Color */
+.text-secondary-500 {
   color: #17395c;
-  font-size: 11px;
-  font-weight: 700;
-  text-align: center;
-  margin-top: 6px;
-  line-height: 1.25;
-  word-break: break-word;
+}
+
+.font-primary {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Product card hover & click scale-90 matching blade */
+.scale-90 {
+  transform: scale(0.90);
 }
 </style>
