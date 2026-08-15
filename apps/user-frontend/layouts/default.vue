@@ -172,7 +172,7 @@ async function logout() {
 
           <!-- If Guest -->
           <template v-else>
-            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-[5px] bg-[#0a6b2a] px-4 py-1.5 text-[14px] font-bold text-white transition hover:opacity-90 shadow-sm">
+            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-[5px] px-4 py-1.5 text-[14px] font-bold text-white transition hover:opacity-90 shadow-sm" :style="{ backgroundColor: themeColor }">
               Login
             </NuxtLink>
           </template>
@@ -181,7 +181,7 @@ async function logout() {
         <!-- Right Nav: Mobile -->
         <div class="flex md:hidden items-center gap-2">
           <template v-if="showProtectedUi">
-            <NuxtLink to="/account" class="inline-flex items-center gap-1.5 rounded-full bg-[#0a6b2a] px-3 py-1.5 text-xs font-bold text-white shadow-sm">
+            <NuxtLink to="/account" class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold text-white shadow-sm" :style="{ backgroundColor: themeColor }">
               <span>💳</span>
               <span>{{ walletBalance }}৳</span>
             </NuxtLink>
@@ -192,7 +192,7 @@ async function logout() {
           </template>
 
           <template v-else>
-            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-[5px] bg-[#0a6b2a] px-3.5 py-1.5 text-[13.5px] font-bold text-white shadow-sm">
+            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-[5px] px-3.5 py-1.5 text-[13.5px] font-bold text-white shadow-sm" :style="{ backgroundColor: themeColor }">
               Login
             </NuxtLink>
           </template>
