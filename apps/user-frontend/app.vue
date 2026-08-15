@@ -6,14 +6,14 @@ const themeColor = computed(() => {
   return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw.toLowerCase() : '#0a6b2a';
 });
 
-// Full page clean white curtain while loading/refreshing
+// Full page clean white curtain on initial mount
 const pageReady = ref(false);
 
 onMounted(() => {
   if (process.client) {
     setTimeout(() => {
       pageReady.value = true;
-    }, 250);
+    }, 200);
   }
 });
 
@@ -30,10 +30,10 @@ useHead(() => {
 </script>
 
 <template>
-  <!-- Page transition top progress bar -->
-  <NuxtLoadingIndicator :color="themeColor" :height="3" :throttle="0" />
+  <!-- Top loading progress bar during background page fetching -->
+  <NuxtLoadingIndicator :color="themeColor" :height="3" :duration="2500" :throttle="0" />
 
-  <!-- Clean White Screen Curtain (prevents any layout jump or black boxes during refresh) -->
+  <!-- Initial clean white curtain to prevent flash during hard refresh -->
   <Transition name="fade-curtain">
     <div v-if="!pageReady" class="page-white-curtain"></div>
   </Transition>
@@ -65,9 +65,19 @@ body {
 }
 
 .fade-curtain-leave-active {
-  transition: opacity 0.25s ease-out;
+  transition: opacity 0.2s ease-out;
 }
 .fade-curtain-leave-to {
+  opacity: 0;
+}
+
+/* Smooth background-fetch page transitions like rgbazer.com */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.22s ease-in-out;
+}
+.page-enter-from,
+.page-leave-to {
   opacity: 0;
 }
 </style>

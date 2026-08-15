@@ -67,7 +67,7 @@ export default defineNuxtConfig({
   css: ["~/assets/css/tailwind.css"],
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL || "/",
-    pageTransition: false,
+    pageTransition: { name: 'page', mode: 'out-in' },
     layoutTransition: false,
     head: {
       meta: [
