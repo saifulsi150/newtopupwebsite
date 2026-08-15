@@ -124,7 +124,7 @@ export default defineNuxtConfig({
   },
   vite: {
     server: {
-      allowedHosts: resolveAllowedHosts()
+      allowedHosts: true
     },
     build: {
       target: "es2022",

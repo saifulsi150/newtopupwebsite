@@ -3,6 +3,7 @@ set -e
 
 # Export standard system paths so npm, node, php, pm2, git are always in PATH
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
+export PM2_HOME="/root/.pm2"
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="https://github.com/saifulsi150/newtopupwebsite.git"
@@ -20,7 +21,7 @@ cd "$PROJECT_ROOT/services"
 php artisan migrate --force || true
 php artisan optimize:clear || true
 
-echo "=== BUILDING NUXT & RELOADING PM2 ==="
+echo "=== BUILDING NUXT FRONTEND ==="
 cd "$PROJECT_ROOT/apps/user-frontend"
 npm run build
 
@@ -31,13 +32,11 @@ fi
 
 PM2_APP_NAME="${PM2_APP_NAME:-$(basename "$PROJECT_ROOT")-frontend}"
 
-echo "=== RELOADING PM2 PROCESS ($PM2_APP_NAME / ALL) ==="
-# Attempt reloading specific named app or all running apps with update-env
-pm2 reload "$PM2_APP_NAME" --update-env 2>/dev/null || \
-sudo pm2 --hp /root reload "$PM2_APP_NAME" --update-env 2>/dev/null || \
-pm2 reload all --update-env 2>/dev/null || \
-sudo pm2 --hp /root reload all --update-env 2>/dev/null || \
-pm2 restart all 2>/dev/null || \
-sudo pm2 --hp /root restart all 2>/dev/null || true
+echo "=== RELOADING PM2 PROCESS ($PM2_APP_NAME) ==="
+# Multi-fallback reload and restart to guarantee new build is served
+sudo -n env PM2_HOME=/root/.pm2 pm2 reload "$PM2_APP_NAME" --update-env 2>/dev/null || \
+sudo -n env PM2_HOME=/root/.pm2 pm2 restart "$PM2_APP_NAME" --update-env 2>/dev/null || \
+env PM2_HOME=/root/.pm2 pm2 reload all --update-env 2>/dev/null || \
+sudo env PM2_HOME=/root/.pm2 pm2 restart all 2>/dev/null || true
 
 echo "=== UPDATE COMPLETED SUCCESSFULLY ==="
