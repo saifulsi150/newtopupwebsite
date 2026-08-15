@@ -83,7 +83,7 @@ function handleProductImageError(event: Event) {
 
 <template>
   <div class="home-page">
-    <!-- Notice Box: Square Sharp Corners matching rgbazer.com -->
+    <!-- Notice Box: Flush Full-Width Sharp Box matching screenshot -->
     <div
       v-if="!noticeDismissed && noticeText"
       class="notice-box"
@@ -141,18 +141,19 @@ function handleProductImageError(event: Event) {
 
 <style scoped>
 .home-page {
-  padding-top: 8px;
+  padding-top: 0px;
   max-width: 1200px;
   margin: 0 auto;
   padding-bottom: 24px;
 }
 
-/* ===== NOTICE BOX (SHARP CORNERS) ===== */
+/* ===== NOTICE BOX: FLUSH & FULL WIDTH ===== */
 .notice-box {
   background: #0d682f;
   color: #ffffff;
-  padding: 8px 12px 9px 12px;
-  margin: 0 10px 10px 10px;
+  padding: 7px 12px 8px 12px;
+  margin: 0 0 10px 0;
+  width: 100%;
   border-radius: 0px;
   position: relative;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
@@ -195,7 +196,7 @@ function handleProductImageError(event: Event) {
 
 /* ===== SLIDER ===== */
 .slider-wrapper {
-  margin: 0 10px 6px 10px;
+  margin: 0 12px 6px 12px;
 }
 
 .slider-container {
@@ -224,33 +225,34 @@ function handleProductImageError(event: Event) {
   margin: 6px auto 0;
 }
 
-/* ===== CATEGORIES & PRODUCTS ===== */
+/* ===== CATEGORIES & SPACING ===== */
 .category-block {
-  margin-top: 18px;
+  margin-top: 14px;
   margin-bottom: 14px;
-  padding: 0 10px;
+  padding: 0 12px;
 }
 
 .category-title {
   text-align: center;
-  font-size: 19px;
+  font-size: 19.5px;
   font-weight: 800;
   color: #17395c;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   letter-spacing: -0.2px;
 }
 
-/* Product Grid: 3 columns with exact 12px vertical and 8px horizontal spacing */
+/* Product Grid: 3 columns with precise 16px row-gap and 10px column-gap */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px 8px;
+  column-gap: 10px;
+  row-gap: 16px;
 }
 
 @media (min-width: 640px) {
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(105px, 120px));
-    gap: 14px 12px;
+    gap: 16px 12px;
     justify-content: start;
   }
 }
@@ -267,16 +269,15 @@ function handleProductImageError(event: Event) {
 
 .product-img-wrap {
   width: 100%;
-  max-width: 115px;
   aspect-ratio: 1/1;
   border-radius: 8px;
   overflow: hidden;
   background: #f1f6fc;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: transform 0.1s ease-in-out;
 }
 
-/* Firm, Smooth Inward Press */
+/* Firm Inward Press */
 .product-card:active .product-img-wrap,
 .product-img-wrap.is-pressed {
   transform: scale(0.92);
@@ -291,12 +292,11 @@ function handleProductImageError(event: Event) {
 
 .product-title {
   color: #17395c;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   text-align: center;
-  margin-top: 4px;
-  line-height: 1.2;
+  margin-top: 6px;
+  line-height: 1.25;
   word-break: break-word;
-  max-width: 115px;
 }
 </style>
