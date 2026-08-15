@@ -50,7 +50,7 @@ const noticeTextColor = computed(() => {
 
 const noticeDismissed = ref(false);
 
-// Firm click lock state
+// Click state
 const clickedProductId = ref<number | null>(null);
 
 function onProductClick(id: number) {
@@ -86,104 +86,107 @@ function handleProductImageError(event: Event) {
 </script>
 
 <template>
-  <div class="p-2">
-    <!-- Notice Container (Exact Blade Structure) -->
-    <div v-if="!noticeDismissed && noticeText" class="notice-container container m-auto mb-2">
-      <div
-        class="alert alert-light notice-style alert-dismissible fade show position-relative"
-        role="alert"
-        :style="{ backgroundColor: noticeBgColor, color: noticeTextColor }"
-      >
-        <button
-          type="button"
-          class="btn-close"
-          aria-label="Close"
-          @click="noticeDismissed = true"
+  <div>
+    <div class="p-2">
+      <!-- 1. Notice Box (Exact Blade Structure & Classes) -->
+      <div v-if="!noticeDismissed && noticeText" class="notice-container container m-auto">
+        <div
+          class="alert alert-light notice-style alert-dismissible fade show position-relative"
+          role="alert"
+          :style="{ backgroundColor: noticeBgColor, color: noticeTextColor }"
         >
-          ✕
-        </button>
-        <div class="notice-heading" :style="{ color: noticeTextColor }">{{ noticeTitle }}</div>
-        <div class="notice-text mb-0" :style="{ color: noticeTextColor }">{{ noticeText }}</div>
-      </div>
-    </div>
-
-    <!-- Slider Section (Exact Blade Structure) -->
-    <section v-if="homeSettings.showSlider !== false && sliderItems.length" class="container m-auto">
-      <section class="carousel my-4" dir="ltr" aria-label="Gallery" tabindex="0" style="margin-bottom: 10px !important;">
-        <div class="carousel__viewport">
-          <ol class="carousel__track">
-            <li v-for="(slider, index) in sliderItems" :key="index" class="carousel__slide">
-              <div class="carousel__item">
-                <a v-if="slider.link_url" :href="slider.link_url" target="_blank" rel="noopener">
-                  <img :src="slider.image_url" :alt="slider.title || 'Slider'" class="rounded-md w-full" @error="handleProductImageError" />
-                </a>
-                <img v-else :src="slider.image_url" :alt="slider.title || 'Slider'" class="rounded-md w-full" @error="handleProductImageError" />
-              </div>
-            </li>
-          </ol>
+          <button
+            type="button"
+            class="btn-close"
+            aria-label="Close"
+            @click="noticeDismissed = true"
+          >
+            ✕
+          </button>
+          <div class="notice-heading" :style="{ color: noticeTextColor }">{{ noticeTitle }}</div>
+          <div class="notice-text mb-0" :style="{ color: noticeTextColor }">{{ noticeText }}</div>
         </div>
+      </div>
 
-        <!-- Single Dash Pagination Indicator -->
-        <div class="carousel__dash_indicator"></div>
-      </section>
-    </section>
-
-    <!-- Products By Category (Exact Blade Structure) -->
-    <template v-if="homeSettings.showCategories !== false && categoryGroups.length">
-      <section v-for="category in categoryGroups" :key="category.title" class="my-2" id="topup">
-        <div class="container mx-auto">
-          <!-- Category Title -->
-          <div class="text-center">
-            <div class="flex items-center justify-center px-4 mt-0 md:mt-2 section-contact-gap pb-4">
-              <h3 class="text-2xl sm:text-3xl text-center font-primary font-bold mx-4 text-secondary-900">
-                {{ category.title }}
-              </h3>
-            </div>
+      <!-- 2. Slider (Exact Blade Structure & Classes) -->
+      <section v-if="homeSettings.showSlider !== false && sliderItems.length" class="container m-auto">
+        <section class="carousel my-4" dir="ltr" aria-label="Gallery" tabindex="0" style="margin-bottom: 10px !important;">
+          <div class="carousel__viewport">
+            <ol class="carousel__track">
+              <li v-for="(slider, index) in sliderItems" :key="index" class="carousel__slide">
+                <div class="carousel__item">
+                  <a v-if="slider.link_url" :href="slider.link_url" target="_blank" rel="noopener">
+                    <img :src="slider.image_url" :alt="slider.title || 'Slider'" class="rounded-md w-full" @error="handleProductImageError" />
+                  </a>
+                  <img v-else :src="slider.image_url" :alt="slider.title || 'Slider'" class="rounded-md w-full" @error="handleProductImageError" />
+                </div>
+              </li>
+            </ol>
           </div>
 
-          <!-- Product Grid: grid-cols-3 gap-4 on mobile, md:grid-cols-6 sm:grid-cols-4 md:gap-8 on desktop -->
-          <div class="pb-1 md:pb-10">
-            <div class="md:py-5 md:px-0 grid md:grid-cols-6 sm:grid-cols-4 grid-cols-3 md:gap-8 gap-4">
-              <div
-                v-for="product in category.products"
-                :key="product.id"
-                class="single-game-product mb-2 md:mb-6"
-              >
-                <NuxtLink
-                  :to="`/topup/${product.slug}`"
-                  class="triangle block text-decoration-none"
-                  @click="onProductClick(product.id)"
+          <!-- Single Dash Indicator -->
+          <div class="carousel__dash_indicator"></div>
+        </section>
+      </section>
+
+      <!-- 3. Products by Category (Exact Blade Structure & Classes) -->
+      <template v-if="homeSettings.showCategories !== false && categoryGroups.length">
+        <section v-for="category in categoryGroups" :key="category.title" class="my-2" id="topup">
+          <div class="container mx-auto">
+            <!-- Category Title Flex -->
+            <div class="text-center">
+              <div class="flex items-center justify-center px-4 mt-0 md:mt-2 section-contact-gap pb-4">
+                <h3 class="text-2xl sm:text-3xl text-center font-primary font-bold mx-4 text-secondary-900">
+                  {{ category.title }}
+                </h3>
+              </div>
+            </div>
+
+            <!-- Product Grid: grid-cols-3 gap-4 on mobile, md:grid-cols-6 sm:grid-cols-4 md:gap-8 on desktop -->
+            <div class="pb-1 md:pb-10">
+              <div class="md:py-5 md:px-0 grid md:grid-cols-6 sm:grid-cols-4 grid-cols-3 md:gap-8 gap-4">
+                <div
+                  v-for="product in category.products"
+                  :key="product.id"
+                  class="single-game-product mb-2 md:mb-6"
                 >
-                  <div class="cursor-pointer">
-                    <!-- Exact Scale 90 Transition on Click / Hover -->
-                    <div
-                      class="inset-0 transform transition duration-300"
-                      :class="clickedProductId === product.id ? 'scale-90' : 'hover:scale-90'"
-                    >
-                      <div class="h-full w-full text-center mx-auto">
-                        <img
-                          :src="product.image_url"
-                          :alt="product.title"
-                          class="rounded-md w-full aspect-square object-cover"
-                          loading="lazy"
-                          decoding="async"
-                          @error="handleProductImageError"
-                        />
+                  <NuxtLink
+                    :to="`/topup/${product.slug}`"
+                    class="triangle block text-decoration-none"
+                    @click="onProductClick(product.id)"
+                  >
+                    <div class="cursor-pointer">
+                      <div class="inset-0 opacity-25"></div>
+                      <!-- Hover / Click Scale-90 Transition Duration-300 -->
+                      <div
+                        class="inset-0 transform transition duration-300"
+                        :class="clickedProductId === product.id ? 'scale-90' : 'hover:scale-90'"
+                      >
+                        <div class="h-full w-full text-center mx-auto">
+                          <img
+                            :src="product.image_url"
+                            :alt="product.title"
+                            class="rounded-md w-full aspect-square object-cover"
+                            loading="lazy"
+                            decoding="async"
+                            @error="handleProductImageError"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div>
-                    <h1 class="capitalize text-xs text-center pt-3 font-primary font-extralight text-secondary-500">
-                      {{ product.title }}
-                    </h1>
-                  </div>
-                </NuxtLink>
+                    <div>
+                      <h1 class="capitalize text-xs text-center pt-3 font-primary font-extralight text-secondary-500">
+                        {{ product.title }}
+                      </h1>
+                    </div>
+                  </NuxtLink>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-    </template>
+        </section>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -201,7 +204,7 @@ function handleProductImageError(event: Event) {
   right: 10px;
   background: transparent;
   border: none;
-  font-size: 14px;
+  font-size: 12px;
   color: inherit;
   cursor: pointer;
   padding: 0;
@@ -209,9 +212,9 @@ function handleProductImageError(event: Event) {
 }
 
 .notice-style .notice-heading {
-  font-size: 16px;
-  font-weight: 700;
-  padding-bottom: 3px;
+  font-size: 18px;
+  font-weight: 500;
+  padding-bottom: 4px;
 }
 
 .notice-text {
@@ -252,12 +255,11 @@ function handleProductImageError(event: Event) {
   margin: 8px auto 0;
 }
 
-/* Category Title Color */
+/* Text Colors */
 .text-secondary-900 {
   color: #17395c;
 }
 
-/* Product Title Color */
 .text-secondary-500 {
   color: #17395c;
 }
@@ -266,7 +268,7 @@ function handleProductImageError(event: Event) {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* Product card hover & click scale-90 matching blade */
+/* Scale 90 helper */
 .scale-90 {
   transform: scale(0.90);
 }
