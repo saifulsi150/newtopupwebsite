@@ -101,16 +101,8 @@ function handleProductImageError(event: Event) {
       <div class="slider-dash-indicator"></div>
     </div>
 
-    <!-- State Handlers -->
-    <div v-if="pending" class="status-msg">
-      Loading...
-    </div>
-    <div v-else-if="error" class="status-msg error-msg">
-      We could not load the catalog right now. Please try again.
-    </div>
-
     <!-- Dynamic Product Categories & Grid -->
-    <template v-else-if="homeSettings.showCategories !== false">
+    <template v-if="homeSettings.showCategories !== false && categoryGroups.length">
       <section v-for="cat in categoryGroups" :key="cat.title" class="category-block">
         <h2 class="category-title">{{ cat.title }}</h2>
 
@@ -227,24 +219,24 @@ function handleProductImageError(event: Event) {
 
 .category-title {
   text-align: center;
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 800;
   color: #17395c;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   letter-spacing: -0.2px;
 }
 
-/* Product Grid matching rgbazer.com */
+/* Product Grid matching rgbazer.com compact sizing */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 @media (min-width: 640px) {
   .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(115px, 130px));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(105px, 120px));
+    gap: 12px;
     justify-content: start;
   }
 }
@@ -261,12 +253,12 @@ function handleProductImageError(event: Event) {
 
 .product-img-wrap {
   width: 100%;
-  max-width: 130px;
+  max-width: 115px;
   aspect-ratio: 1/1;
   border-radius: 8px;
   overflow: hidden;
-  background: #000000;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  background: #f1f6fc;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   transition: transform 0.08s ease-out;
 }
 
@@ -285,23 +277,12 @@ function handleProductImageError(event: Event) {
 
 .product-title {
   color: #17395c;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   text-align: center;
-  margin-top: 5px;
-  line-height: 1.25;
+  margin-top: 4px;
+  line-height: 1.2;
   word-break: break-word;
-  max-width: 130px;
-}
-
-.status-msg {
-  text-align: center;
-  padding: 24px;
-  color: #64748b;
-  font-size: 13px;
-}
-
-.error-msg {
-  color: #e11d48;
+  max-width: 115px;
 }
 </style>

@@ -6,6 +6,17 @@ const themeColor = computed(() => {
   return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw.toLowerCase() : '#0a6b2a';
 });
 
+// Full page clean white curtain while loading/refreshing
+const pageReady = ref(false);
+
+onMounted(() => {
+  if (process.client) {
+    setTimeout(() => {
+      pageReady.value = true;
+    }, 250);
+  }
+});
+
 useHead(() => {
   const iconUrl = contactSettingsData.value?.contact?.site_icon_url;
   return {
@@ -19,8 +30,13 @@ useHead(() => {
 </script>
 
 <template>
-  <!-- Page transition top progress bar with theme color -->
+  <!-- Page transition top progress bar -->
   <NuxtLoadingIndicator :color="themeColor" :height="3" :throttle="0" />
+
+  <!-- Clean White Screen Curtain (prevents any layout jump or black boxes during refresh) -->
+  <Transition name="fade-curtain">
+    <div v-if="!pageReady" class="page-white-curtain"></div>
+  </Transition>
 
   <NuxtLayout>
     <NuxtPage />
@@ -39,5 +55,19 @@ body {
   -webkit-tap-highlight-color: transparent;
   background-color: #f1f6fc;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.page-white-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background-color: #ffffff;
+}
+
+.fade-curtain-leave-active {
+  transition: opacity 0.25s ease-out;
+}
+.fade-curtain-leave-to {
+  opacity: 0;
 }
 </style>
