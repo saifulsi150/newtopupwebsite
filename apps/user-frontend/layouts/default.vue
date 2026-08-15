@@ -172,7 +172,7 @@ async function logout() {
 
           <!-- If Guest -->
           <template v-else>
-            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-md px-4 py-1.5 text-[13.5px] font-bold text-white transition hover:opacity-90 shadow-sm" :style="{ backgroundColor: themeColor }">
+            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-none px-4 py-1.5 text-[13.5px] font-bold text-white transition hover:opacity-90 shadow-sm" :style="{ backgroundColor: themeColor }">
               Login
             </NuxtLink>
           </template>
@@ -192,7 +192,7 @@ async function logout() {
           </template>
 
           <template v-else>
-            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-md px-3.5 py-1 text-[13px] font-bold text-white shadow-sm" :style="{ backgroundColor: themeColor }">
+            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-none px-3.5 py-1 text-[13px] font-bold text-white shadow-sm" :style="{ backgroundColor: themeColor }">
               Login
             </NuxtLink>
           </template>

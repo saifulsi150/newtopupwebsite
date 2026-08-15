@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { data: contactSettingsData } = await useFetch<any>('/api/settings/contact', { server: false });
+const router = useRouter();
 
 const themeColor = computed(() => {
   const raw = String(contactSettingsData.value?.contact?.theme_color || '').trim();
@@ -19,7 +20,7 @@ onMounted(() => {
   if (process.client) {
     setTimeout(() => {
       pageReady.value = true;
-    }, 180);
+    }, 150);
   }
 });
 
@@ -36,8 +37,8 @@ useHead(() => {
 </script>
 
 <template>
-  <!-- Top loading progress bar during background page fetching (Exact rgbazer.com gradient) -->
-  <NuxtLoadingIndicator :color="indicatorColor" :height="3" :throttle="100" :duration="2000" />
+  <!-- Top loading progress bar (snappy 1200ms duration, 0 throttle so it never freezes on multi-clicks) -->
+  <NuxtLoadingIndicator :color="indicatorColor" :height="3" :throttle="0" :duration="1200" />
 
   <!-- Initial clean white curtain to prevent flash during hard refresh -->
   <Transition name="fade-curtain">
@@ -71,13 +72,13 @@ body {
 }
 
 .fade-curtain-leave-active {
-  transition: opacity 0.2s ease-out;
+  transition: opacity 0.15s ease-out;
 }
 .fade-curtain-leave-to {
   opacity: 0;
 }
 
-/* Smooth background-fetch page transitions matching rgbazer.com */
+/* Smooth background-fetch page transitions */
 .page-enter-active,
 .page-leave-active {
   transition: opacity 0.15s ease-in-out;
@@ -95,7 +96,7 @@ body {
   left: 0;
   pointer-events: none;
   transform-origin: left center;
-  transition: transform 0.1s ease, opacity 0.4s ease, height 0.4s ease;
+  transition: transform 0.08s ease, opacity 0.25s ease, height 0.25s ease;
   z-index: 999999;
 }
 </style>
