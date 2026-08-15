@@ -83,7 +83,7 @@ function handleProductImageError(event: Event) {
 
 <template>
   <div class="home-page">
-    <!-- Notice Box: Flush Full-Width Sharp Box matching screenshot -->
+    <!-- Notice Box: Flush Full-Width Sharp Box matching rgbazer.com -->
     <div
       v-if="!noticeDismissed && noticeText"
       class="notice-box"
@@ -147,12 +147,12 @@ function handleProductImageError(event: Event) {
   padding-bottom: 24px;
 }
 
-/* ===== NOTICE BOX: FLUSH & FULL WIDTH ===== */
+/* ===== NOTICE BOX: FLUSH & FULL WIDTH (1:1 with rgbazer.com) ===== */
 .notice-box {
   background: #0d682f;
   color: #ffffff;
-  padding: 7px 12px 8px 12px;
-  margin: 0 0 10px 0;
+  padding: 6px 12px 7px 12px;
+  margin: 0 0 8px 0;
   width: 100%;
   border-radius: 0px;
   position: relative;
@@ -196,7 +196,7 @@ function handleProductImageError(event: Event) {
 
 /* ===== SLIDER ===== */
 .slider-wrapper {
-  margin: 0 12px 6px 12px;
+  margin: 0 12px 4px 12px;
 }
 
 .slider-container {
@@ -222,37 +222,37 @@ function handleProductImageError(event: Event) {
   height: 4px;
   background: #000000;
   border-radius: 2px;
-  margin: 6px auto 0;
+  margin: 8px auto 14px;
 }
 
 /* ===== CATEGORIES & SPACING ===== */
 .category-block {
-  margin-top: 14px;
-  margin-bottom: 14px;
-  padding: 0 12px;
+  margin-top: 0;
+  margin-bottom: 16px;
+  padding: 0 14px;
 }
 
 .category-title {
   text-align: center;
-  font-size: 19.5px;
+  font-size: 22px;
   font-weight: 800;
   color: #17395c;
   margin-bottom: 12px;
   letter-spacing: -0.2px;
 }
 
-/* Product Grid: 3 columns with precise 16px row-gap and 10px column-gap */
+/* Product Grid: 3 columns with 14px row-gap and 12px column-gap */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  column-gap: 10px;
-  row-gap: 16px;
+  column-gap: 12px;
+  row-gap: 14px;
 }
 
 @media (min-width: 640px) {
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(105px, 120px));
-    gap: 16px 12px;
+    gap: 16px 14px;
     justify-content: start;
   }
 }
@@ -270,7 +270,7 @@ function handleProductImageError(event: Event) {
 .product-img-wrap {
   width: 100%;
   aspect-ratio: 1/1;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
   background: #f1f6fc;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);

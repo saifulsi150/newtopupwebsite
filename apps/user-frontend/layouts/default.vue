@@ -59,10 +59,10 @@ const secondaryLogoUrl = computed(() =>
 const headerLogoUrl = computed(() => primaryLogoUrl.value || secondaryLogoUrl.value || siteIconUrl.value);
 const appIconUrl = computed(() => headerLogoUrl.value || siteIconUrl.value);
 
-// Dynamic Colors
+// Dynamic Colors (Defaulting to exact rgbazer.com green #0a6b2a)
 const themeColor = computed(() => {
   const raw = String(supportSettings.value?.theme_color || '').trim();
-  return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#0d682f';
+  return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#0a6b2a';
 });
 const bgColor = computed(() => {
   const raw = String(supportSettings.value?.background_color || '').trim();
@@ -136,7 +136,7 @@ async function logout() {
 <template>
   <div class="themed-root relative flex min-h-screen flex-col justify-between text-slate-900" :style="themeStyles">
     <!-- HEADER -->
-    <header class="fixed inset-x-0 top-0 z-50 h-[62px] border-b border-slate-100 shadow-[0_1px_4px_rgba(0,0,0,0.03)] md:h-[68px]" :style="{ backgroundColor: headerBgColor }">
+    <header class="fixed inset-x-0 top-0 z-50 h-[60px] border-b border-slate-100 shadow-[0_1px_4px_rgba(0,0,0,0.03)] md:h-[68px]" :style="{ backgroundColor: headerBgColor }">
       <div class="mx-auto flex h-full max-w-6xl items-center justify-between px-3.5 lg:px-8">
         <!-- Logo -->
         <NuxtLink to="/" class="flex items-center gap-2" @click="closeMenu">
@@ -172,7 +172,7 @@ async function logout() {
 
           <!-- If Guest -->
           <template v-else>
-            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-[5px] px-4 py-1.5 text-[14px] font-bold text-white transition hover:opacity-90 shadow-sm" :style="{ backgroundColor: themeColor }">
+            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-[5px] bg-[#0a6b2a] px-4 py-1.5 text-[14px] font-bold text-white transition hover:opacity-90 shadow-sm">
               Login
             </NuxtLink>
           </template>
@@ -181,7 +181,7 @@ async function logout() {
         <!-- Right Nav: Mobile -->
         <div class="flex md:hidden items-center gap-2">
           <template v-if="showProtectedUi">
-            <NuxtLink to="/account" class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold text-white shadow-sm" :style="{ backgroundColor: themeColor }">
+            <NuxtLink to="/account" class="inline-flex items-center gap-1.5 rounded-full bg-[#0a6b2a] px-3 py-1.5 text-xs font-bold text-white shadow-sm">
               <span>💳</span>
               <span>{{ walletBalance }}৳</span>
             </NuxtLink>
@@ -192,7 +192,7 @@ async function logout() {
           </template>
 
           <template v-else>
-            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-[5px] px-3.5 py-1 text-[13.5px] font-bold text-white shadow-sm" :style="{ backgroundColor: themeColor }">
+            <NuxtLink to="/login" class="inline-flex items-center justify-center rounded-[5px] bg-[#0a6b2a] px-3.5 py-1.5 text-[13.5px] font-bold text-white shadow-sm">
               Login
             </NuxtLink>
           </template>
@@ -207,7 +207,7 @@ async function logout() {
           <div class="text-xs text-slate-500">{{ (auth.user?.value || auth.user)?.email || '' }}</div>
         </div>
         <div class="space-y-1 text-sm font-medium">
-          <NuxtLink to="/add-money" class="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 font-bold text-[#0d682f] transition hover:bg-emerald-100" @click="closeMenu">
+          <NuxtLink to="/add-money" class="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 font-bold text-[#0a6b2a] transition hover:bg-emerald-100" @click="closeMenu">
             <svg viewBox="0 0 24 24" class="h-4 w-4 fill-current"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
             <span>Add Money</span>
           </NuxtLink>
@@ -222,7 +222,7 @@ async function logout() {
     </header>
 
     <!-- PAGE CONTENT -->
-    <main class="flex-1 pt-[62px] md:pt-[68px] pb-[64px] md:pb-0">
+    <main class="flex-1 pt-[60px] md:pt-[68px] pb-[60px] md:pb-0">
       <slot />
     </main>
 
@@ -289,10 +289,10 @@ async function logout() {
     </footer>
 
     <!-- BOTTOM MOBILE NAVIGATION (matching rgbazer.com) -->
-    <nav class="fixed inset-x-0 bottom-0 z-40 h-[58px] border-t border-slate-200 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.03)] md:hidden">
+    <nav class="fixed inset-x-0 bottom-0 z-40 h-[56px] border-t border-slate-200 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.03)] md:hidden">
       <!-- If Logged In: 5 Items -->
       <div v-if="showProtectedUi" class="relative mx-auto grid h-full max-w-lg grid-cols-5 items-center text-center text-[10px] font-semibold">
-        <NuxtLink to="/" class="flex flex-col items-center gap-0.5" :style="{ color: themeColor }">
+        <NuxtLink to="/" class="flex flex-col items-center gap-0.5 text-[#0a6b2a]">
           <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z"/>
           </svg>
@@ -308,7 +308,7 @@ async function logout() {
 
         <!-- Elevated Add Money Button -->
         <NuxtLink to="/add-money" class="flex flex-col items-center justify-end text-slate-600">
-          <div class="absolute -top-4 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-md border-[3px] border-white" :style="{ backgroundColor: themeColor }">
+          <div class="absolute -top-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#0a6b2a] text-white shadow-md border-[3px] border-white">
             <svg viewBox="0 0 24 24" class="h-6 w-6 fill-white">
               <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
             </svg>
@@ -331,9 +331,9 @@ async function logout() {
         </NuxtLink>
       </div>
 
-      <!-- If Guest: 4 Items -->
-      <div v-else class="mx-auto grid h-full max-w-lg grid-cols-4 items-center text-center text-[10px] font-semibold">
-        <NuxtLink to="/" class="flex flex-col items-center gap-0.5" :style="{ color: themeColor }">
+      <!-- If Guest: 4 Items matching rgbazer.com (Home, Tutorial, TopUp, Contact Us) -->
+      <div v-else class="mx-auto grid h-full max-w-lg grid-cols-4 items-center text-center text-[11px] font-semibold">
+        <NuxtLink to="/" class="flex flex-col items-center gap-0.5 text-[#0a6b2a]">
           <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current stroke-[2]" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z"/>
           </svg>
@@ -367,7 +367,7 @@ async function logout() {
 
 <style scoped>
 .themed-root {
-  --theme-color: #0d682f;
+  --theme-color: #0a6b2a;
   --body-bg: #f1f6fc;
 }
 </style>
