@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 type Product = {
   id: number;
@@ -11,18 +11,10 @@ type Product = {
   category_title?: string;
 };
 
-const { data, pending, error } = await useFetch<{ products: Product[] }>('/api/home', {
-  key: 'home-products-v2'
-});
-const { data: categoriesData } = await useFetch<{ categories: Array<{ id: number; name: string }> }>('/api/categories', {
-  key: 'home-categories-v1'
-});
-const { data: homeSettingsData } = await useFetch<any>('/api/settings/home', {
-  key: 'home-settings-v1'
-});
+const { data } = await useFetch<{ products: Product[] }>('/api/home', { key: 'home-products-v2' });
+const { data: homeSettingsData } = await useFetch<any>('/api/settings/home', { key: 'home-settings-v1' });
 
 const products = computed(() => data.value?.products || []);
-const categories = computed(() => categoriesData.value?.categories || []);
 const homeSettings = computed(() => homeSettingsData.value?.home || {});
 
 const sliderItems = computed(() => {
@@ -30,54 +22,58 @@ const sliderItems = computed(() => {
   return list.filter((item: any) => Boolean(item?.enabled));
 });
 
-const noticeText = computed(() => {
-  return String(homeSettings.value?.notice || '').trim();
-});
-
-const noticeTitle = computed(() => {
-  return String(homeSettings.value?.notice_title || 'Notice:').trim();
-});
-
+const noticeText = computed(() => String(homeSettings.value?.notice || '').trim());
+const noticeTitle = computed(() => String(homeSettings.value?.notice_title || 'Notice:').trim());
 const noticeBgColor = computed(() => {
   const raw = String(homeSettings.value?.notice_bg_color || '').trim();
   return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#0a6b2a';
 });
-
 const noticeTextColor = computed(() => {
   const raw = String(homeSettings.value?.notice_text_color || '').trim();
   return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#ffffff';
 });
 
 const noticeDismissed = ref(false);
-
-// Firm click lock state
 const clickedProductId = ref<number | null>(null);
+
+// Slider state
+const currentSlide = ref(0);
+let sliderTimer: ReturnType<typeof setInterval> | null = null;
+
+function startSlider() {
+  if (sliderTimer) clearInterval(sliderTimer);
+  sliderTimer = setInterval(() => {
+    if (sliderItems.value.length > 1) {
+      currentSlide.value = (currentSlide.value + 1) % sliderItems.value.length;
+    }
+  }, 3500);
+}
+
+function goToSlide(i: number) {
+  currentSlide.value = i;
+  startSlider();
+}
+
+onMounted(() => { if (sliderItems.value.length > 1) startSlider(); });
+onUnmounted(() => { if (sliderTimer) clearInterval(sliderTimer); });
 
 function onProductClick(id: number) {
   clickedProductId.value = id;
 }
 
-// Group products dynamically by Category title from database/admin
 const categoryGroups = computed(() => {
   const allProducts = products.value;
   if (!allProducts.length) return [];
-
   const groupMap = new Map<string, Product[]>();
   for (const p of allProducts) {
-    const catTitle = (p.category_title && p.category_title.trim()) || 'Special Offer';
-    if (!groupMap.has(catTitle)) {
-      groupMap.set(catTitle, []);
-    }
+    const catTitle = (p.category_title?.trim()) || 'Special Offer';
+    if (!groupMap.has(catTitle)) groupMap.set(catTitle, []);
     groupMap.get(catTitle)!.push(p);
   }
-
-  return Array.from(groupMap.entries()).map(([title, prods]) => ({
-    title,
-    products: prods
-  }));
+  return Array.from(groupMap.entries()).map(([title, prods]) => ({ title, products: prods }));
 });
 
-function handleProductImageError(event: Event) {
+function handleImageError(event: Event) {
   const target = event.target as HTMLImageElement | null;
   if (!target) return;
   target.onerror = null;
@@ -87,221 +83,326 @@ function handleProductImageError(event: Event) {
 
 <template>
   <div class="home-page">
-    <!-- Notice Box: Flush Edge-to-Edge with Zero Margin (1:1 with rgbazer.com) -->
+
+    <!-- ===================== NOTICE BAR ===================== -->
     <div
       v-if="!noticeDismissed && noticeText"
-      class="notice-box"
-      :style="{ backgroundColor: noticeBgColor, color: noticeTextColor }"
+      class="notice-bar"
+      :style="{ backgroundColor: noticeBgColor }"
     >
-      <button class="notice-close" type="button" aria-label="Close Notice" @click="noticeDismissed = true">
-        <svg viewBox="0 0 24 24" class="close-icon"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.2" fill="none"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2.2"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2.2"/></svg>
-      </button>
-      <div class="notice-title" :style="{ color: noticeTextColor }">{{ noticeTitle }}</div>
-      <div class="notice-text" :style="{ color: noticeTextColor }">{{ noticeText }}</div>
-    </div>
-
-    <!-- Main Banner Slider -->
-    <div v-if="homeSettings.showSlider !== false && sliderItems.length" class="slider-wrapper">
-      <div class="slider-container">
-        <a
-          v-for="(item, index) in sliderItems"
-          :key="index"
-          :href="item.link_url || '#'"
-          target="_blank"
-          rel="noopener"
-          class="slide-item"
-        >
-          <img :src="item.image_url" :alt="item.title || 'Banner'" @error="handleProductImageError" />
-        </a>
-      </div>
-
-      <!-- Single Dash Indicator -->
-      <div class="slider-dash-indicator"></div>
-    </div>
-
-    <!-- Dynamic Product Categories & Grid (Exact 1:1 with rgbazer.com) -->
-    <template v-if="homeSettings.showCategories !== false && categoryGroups.length">
-      <section v-for="cat in categoryGroups" :key="cat.title" class="category-block">
-        <h2 class="category-title">{{ cat.title }}</h2>
-
-        <div class="product-grid">
-          <NuxtLink
-            v-for="item in cat.products"
-            :key="item.id"
-            :to="`/topup/${item.slug}`"
-            class="product-card"
-            @click="onProductClick(item.id)"
-          >
-            <div class="product-img-wrap" :class="{ 'is-pressed': clickedProductId === item.id }">
-              <img :src="item.image_url" :alt="item.title" loading="lazy" decoding="async" @error="handleProductImageError" />
-            </div>
-            <p class="product-title">{{ item.title }}</p>
-          </NuxtLink>
+      <div class="notice-bar__inner">
+        <div class="notice-bar__content">
+          <span class="notice-bar__label" :style="{ color: noticeTextColor }">{{ noticeTitle }}</span>
+          <span class="notice-bar__text" :style="{ color: noticeTextColor }">{{ noticeText }}</span>
         </div>
-      </section>
-    </template>
+        <button class="notice-bar__close" type="button" @click="noticeDismissed = true" :style="{ color: noticeTextColor }">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===================== SLIDER ===================== -->
+    <div v-if="sliderItems.length" class="slider-outer">
+      <div class="slider-inner">
+        <div class="slider-track" :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
+          <div v-for="(item, i) in sliderItems" :key="i" class="slide">
+            <a :href="item.link_url || '#'" :target="item.link_url ? '_blank' : '_self'" rel="noopener">
+              <img :src="item.image_url" :alt="item.title || 'Banner'" class="slide-img" @error="handleImageError" />
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- Dots -->
+      <div v-if="sliderItems.length > 1" class="slider-dots">
+        <button
+          v-for="(_, i) in sliderItems"
+          :key="i"
+          class="slider-dot"
+          :class="{ active: currentSlide === i }"
+          @click="goToSlide(i)"
+          :aria-label="`Slide ${i + 1}`"
+        />
+      </div>
+      <!-- Single dash for 1 slide -->
+      <div v-else class="slider-single-dash"></div>
+    </div>
+
+    <!-- ===================== PRODUCT CATEGORIES ===================== -->
+    <div class="categories-outer">
+      <template v-if="categoryGroups.length">
+        <section v-for="cat in categoryGroups" :key="cat.title" class="cat-section">
+          <!-- Category Title -->
+          <h2 class="cat-title">{{ cat.title }}</h2>
+
+          <!-- Product Grid -->
+          <div class="product-grid">
+            <NuxtLink
+              v-for="item in cat.products"
+              :key="item.id"
+              :to="`/topup/${item.slug}`"
+              class="product-card"
+              @click="onProductClick(item.id)"
+            >
+              <div class="product-img-wrap" :class="{ 'pressed': clickedProductId === item.id }">
+                <img
+                  :src="item.image_url"
+                  :alt="item.title"
+                  class="product-img"
+                  loading="lazy"
+                  decoding="async"
+                  @error="handleImageError"
+                />
+              </div>
+              <p class="product-title">{{ item.title }}</p>
+            </NuxtLink>
+          </div>
+        </section>
+      </template>
+    </div>
+
   </div>
 </template>
 
 <style scoped>
+/* ============================================================
+   BASE
+============================================================ */
 .home-page {
-  padding-top: 0px;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-bottom: 24px;
+  background: #f4f6f9;
+  min-height: 100vh;
+  padding-bottom: 32px;
 }
 
-/* ===== NOTICE BOX: FLUSH & FULL WIDTH (1:1 with rgbazer.com) ===== */
-.notice-box {
-  background: #0a6b2a;
-  color: #ffffff;
-  padding: 7px 12px 8px 12px;
-  margin: 0 0 8px 0;
+/* ============================================================
+   NOTICE BAR — Full-width, no rounding, no margin
+============================================================ */
+.notice-bar {
   width: 100%;
-  border-radius: 0px;
-  position: relative;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  background: #0a6b2a;
+  padding: 7px 0 8px;
+  margin: 0 0 8px 0;
 }
 
-.notice-title {
-  font-weight: 800;
+.notice-bar__inner {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.notice-bar__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notice-bar__label {
+  display: block;
   font-size: 13.5px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.3;
   margin-bottom: 2px;
-  color: #ffffff;
-  line-height: 1.2;
 }
 
-.notice-text {
+.notice-bar__text {
+  display: block;
   font-size: 11.5px;
-  color: #ffffff;
-  padding-right: 24px;
-  line-height: 1.45;
   font-weight: 400;
+  color: #fff;
+  line-height: 1.5;
 }
 
-.notice-close {
-  position: absolute;
-  top: 7px;
-  right: 8px;
+.notice-bar__close {
+  flex-shrink: 0;
   background: transparent;
   border: none;
-  color: #ffffff;
+  color: #fff;
   cursor: pointer;
   padding: 0;
+  margin-top: 1px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+.notice-bar__close:hover { opacity: 1; }
+
+/* ============================================================
+   SLIDER
+============================================================ */
+.slider-outer {
+  max-width: 760px;
+  margin: 0 auto 0;
+  padding: 0 12px;
 }
 
-.close-icon {
-  width: 18px;
-  height: 18px;
-}
-
-/* ===== SLIDER ===== */
-.slider-wrapper {
-  margin: 0 12px 4px 12px;
-}
-
-.slider-container {
-  border-radius: 0px;
+.slider-inner {
   overflow: hidden;
-  background: transparent;
-}
-
-.slide-item {
+  border-radius: 10px;
+  background: #000;
   width: 100%;
-  display: block;
 }
 
-.slide-item img {
+.slider-track {
+  display: flex;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+}
+
+.slide {
+  min-width: 100%;
+  flex-shrink: 0;
+}
+
+.slide-img {
+  display: block;
   width: 100%;
   height: auto;
-  display: block;
-  object-fit: contain;
+  object-fit: cover;
 }
 
-.slider-dash-indicator {
+/* Dots */
+.slider-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  margin: 8px auto 14px;
+}
+
+.slider-dot {
   width: 16px;
   height: 4px;
-  background: #000000;
+  border-radius: 2px;
+  background: #c0c8d8;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, width 0.2s;
+}
+
+.slider-dot.active {
+  background: #17395c;
+  width: 24px;
+}
+
+.slider-single-dash {
+  width: 16px;
+  height: 4px;
+  background: #17395c;
   border-radius: 2px;
   margin: 8px auto 14px;
 }
 
-/* ===== CATEGORIES & SPACING ===== */
-.category-block {
-  margin-top: 0;
-  margin-bottom: 16px;
-  padding: 0 14px;
+/* ============================================================
+   CATEGORY SECTIONS
+============================================================ */
+.categories-outer {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 12px;
 }
 
-.category-title {
+.cat-section {
+  margin-bottom: 24px;
+}
+
+.cat-title {
   text-align: center;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   color: #17395c;
-  margin-bottom: 12px;
+  margin: 0 0 12px;
   letter-spacing: -0.2px;
 }
 
-/* Product Grid: 3 columns with 14px row-gap and 12px column-gap */
+/* ============================================================
+   PRODUCT GRID
+   Mobile: 3 columns, gap-4 (16px)
+   Desktop md: 6 columns, gap-8 (32px)
+============================================================ */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  column-gap: 12px;
-  row-gap: 14px;
+  gap: 16px 12px;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
+  .cat-title {
+    font-size: 22px;
+  }
   .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(105px, 120px));
-    gap: 16px 14px;
-    justify-content: start;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 20px 16px;
   }
 }
 
+/* ============================================================
+   PRODUCT CARD
+============================================================ */
 .product-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
   outline: none;
+  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
 }
 
 .product-img-wrap {
   width: 100%;
-  aspect-ratio: 1/1;
+  aspect-ratio: 1 / 1;
   border-radius: 12px;
   overflow: hidden;
-  background: #f1f6fc;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #e8eff8;
+  box-shadow: 0 2px 8px rgba(23, 57, 92, 0.10);
+  transform: scale(1);
+  transition: transform 0.30s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.30s ease;
+  will-change: transform;
 }
 
-/* Hover & Active Scale 90 */
-.product-card:hover .product-img-wrap,
+/* Hover: desktop */
+.product-card:hover .product-img-wrap {
+  transform: scale(0.92);
+  box-shadow: 0 1px 4px rgba(23, 57, 92, 0.06);
+}
+
+/* Active / clicked: both mobile & desktop */
 .product-card:active .product-img-wrap,
-.product-img-wrap.is-pressed {
+.product-img-wrap.pressed {
   transform: scale(0.90);
+  box-shadow: none;
 }
 
-.product-img-wrap img {
+.product-img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
 .product-title {
-  color: #17395c;
   font-size: 11px;
   font-weight: 700;
+  color: #17395c;
   text-align: center;
-  margin-top: 6px;
-  line-height: 1.25;
+  margin: 6px 0 0;
+  line-height: 1.3;
   word-break: break-word;
+}
+
+/* Desktop larger title text */
+@media (min-width: 768px) {
+  .product-title {
+    font-size: 12px;
+  }
 }
 </style>
